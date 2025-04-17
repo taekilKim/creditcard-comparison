@@ -1,3 +1,11 @@
+opentype.load('fonts/KBFGDisplayM.otf', function(err, font) {
+  if (err) {
+    console.error('폰트 로딩 오류:', err);
+  } else {
+    console.log('폰트 로드 성공:', font.names.fullName.en);
+  }
+});
+
 document.getElementById('generate').addEventListener('click', async () => {
   const name = document.getElementById('name').value;
   const org = document.getElementById('org').value;
