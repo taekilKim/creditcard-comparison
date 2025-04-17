@@ -1,13 +1,14 @@
-# 명함 PDF 생성기 (KBFG 폰트 기반)
+# 명함 PDF 생성기 (KBFG 폰트, Vercel 배포용)
 
-사용자 입력 정보로 텍스트를 아웃라인 처리하여 인쇄 가능한 PDF 명함을 생성합니다.
+## 구조
+- 폰트 파일은 `public/fonts/`에 위치
+- JS에서는 `fonts/xxx.otf`로 접근
+- Vercel은 `public/`을 정적 파일 루트로 간주함
 
-## 사용 기술
-- HTML + CSS
-- opentype.js: 폰트를 path로 변환
-- pdf-lib: PDF 생성
-
-## 폰트
-- KBFGDisplayM.otf: 이름
-- KBFGTextB.otf: 소속
-- KBFGTextL.otf: 연락처, 이메일
+## 구성
+- `index.html`
+- `style.css`
+- `script.js`
+- `public/fonts/KBFGDisplayM.otf`
+- `public/fonts/KBFGTextB.otf`
+- `public/fonts/KBFGTextL.otf`
