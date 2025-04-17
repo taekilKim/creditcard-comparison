@@ -6,18 +6,16 @@ document.getElementById('generate').addEventListener('click', async () => {
 
   const { PDFDocument } = PDFLib;
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([260.63, 147.4]);
+  const page = pdfDoc.addPage([260.63, 147.4]); // 92mm x 52mm
 
-  const fontDisplay = await opentype.load('KBFGDisplayM.otf');
-  const fontBold = await opentype.load('KBFGTextB.otf');
-  const fontLight = await opentype.load('KBFGTextL.otf');
+  const fontDisplay = await opentype.load('fonts/KBFGDisplayM.otf');
+  const fontBold = await opentype.load('fonts/KBFGTextB.otf');
+  const fontLight = await opentype.load('fonts/KBFGTextL.otf');
 
   const drawText = (text, font, x, y, size) => {
     const path = font.getPath(text, x, y, size);
     const cmds = path.toPathData(2);
-    return `q 0 0 0 rg
-${cmds}
-Q`;
+    return `q 0 0 0 rg\n${cmds}\nQ`;
   };
 
   const paths = [
