@@ -4,7 +4,7 @@ document.getElementById("infoForm").addEventListener("submit", async (e) => {
   const form = e.target;
   const userData = Object.fromEntries(new FormData(form));
 
-  const existingPdfBytes = await fetch("KB_PINTECH_명함_템플릿_240415_재전송.pdf").then(res => res.arrayBuffer());
+  const existingPdfBytes = await fetch("kbfintech_template.pdf").then(res => res.arrayBuffer());
   const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
   const formFields = pdfDoc.getForm();
 
