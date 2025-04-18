@@ -1,38 +1,26 @@
-document.getElementById('generate').addEventListener('click', async () => {
-  const name = document.getElementById('name').value;
-  const org = document.getElementById('org').value;
-  const phone = document.getElementById('phone').value;
-  const email = document.getElementById('email').value;
+document.getElementById("infoForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-  const { PDFDocument } = PDFLib;
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([260.63, 147.4]); // 92mm x 52mm
+  const form = e.target;
+  const userData = Object.fromEntries(new FormData(form));
 
-  const fontDisplay = await opentype.load('fonts/KBFGDisplayM.otf');
-  const fontBold = await opentype.load('fonts/KBFGTextB.otf');
-  const fontLight = await opentype.load('fonts/KBFGTextL.otf');
+  const existingPdfBytes = await fetch("KB_PINTECH_명함_템플릿_240415_재전송.pdf").then(res => res.arrayBuffer());
+  const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+  const formFields = pdfDoc.getForm();
 
-  const drawText = (text, font, x, y, size) => {
-    const path = font.getPath(text, x, y, size);
-    const cmds = path.toPathData(2);
-    return `q 0 0 0 rg\n${cmds}\nQ`;
-  };
-
-  const paths = [
-    drawText(name, fontDisplay, 54, 100, 13),
-    drawText(org, fontBold, 54, 85, 9),
-    drawText(phone, fontLight, 54, 70, 8),
-    drawText(email, fontLight, 54, 60, 8),
-  ];
-
-  const all = paths.join('\n');
-  const stream = pdfDoc.register(await pdfDoc.context.streamFromString(all));
-  page.node.addContentStream(stream);
+  formFields.getTextField("KOR_NAME").setText(userData.kor_name);
+  formFields.getTextField("ENG_NAME").setText(userData.eng_name);
+  formFields.getTextField("KOR_DEPT").setText(userData.kor_dept);
+  formFields.getTextField("ENG_DEPT").setText(userData.eng_dept);
+  formFields.getTextField("KOR_TITLE").setText(userData.kor_title);
+  formFields.getTextField("ENG_TITLE").setText(userData.eng_title);
+  formFields.getTextField("PHONE").setText(userData.phone);
+  formFields.getTextField("EMAIL_ID").setText(userData.email_id);
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const link = document.createElement('a');
+  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = 'namecard.pdf';
+  link.download = "namecard_filled.pdf";
   link.click();
 });

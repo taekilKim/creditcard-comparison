@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <title>명함 PDF 생성기</title>
-  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+  <script defer src="script.js"></script>
 </head>
 <body>
-  <h1>명함 PDF 생성기</h1>
-  <form>
-    <label>이름: <input type="text" id="name" value="김태길" /></label>
-    <label>소속: <input type="text" id="org" value="알다 디자인팀" /></label>
-    <label>연락처: <input type="text" id="phone" value="010-1234-5678" /></label>
-    <label>이메일: <input type="text" id="email" value="taekil@alda.ai" /></label>
-    <button type="button" id="generate">PDF 다운로드</button>
+  <h2>명함 정보 입력</h2>
+  <form id="infoForm">
+    <label>국문 이름: <input name="kor_name" /></label><br/>
+    <label>영문 이름: <input name="eng_name" /></label><br/>
+    <label>국문 소속: <input name="kor_dept" /></label><br/>
+    <label>영문 소속: <input name="eng_dept" /></label><br/>
+    <label>국문 직함: <input name="kor_title" /></label><br/>
+    <label>영문 직함: <input name="eng_title" /></label><br/>
+    <label>전화번호: <input name="phone" /></label><br/>
+    <label>이메일 ID: <input name="email_id" /></label><br/>
+    <button type="submit">PDF 다운로드</button>
   </form>
-  <script src="script.js"></script>
 </body>
 </html>
