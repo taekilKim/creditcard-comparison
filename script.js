@@ -26,12 +26,8 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // 3) CMYK 색상 정의 (Pantone 404C)
-  const nameColor = pdfDoc.context.obj({
-    Type: 'ColorSpace',
-    base: 'DeviceCMYK',
-    values: [0, 0.10, 0.20, 0.65],
-  });
+  // 3) CMYK 색상 정의 (Pantone 404C) — 수정된 부분
+  const nameColor = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
 
   // 4) 텍스트 Path 그리기 함수
   function drawTextPath(page, font, text, mmX, mmY, fontSize, letterEm) {
@@ -45,7 +41,10 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
       pathData += p.toPathData(2);
       cursor += g.advanceWidth * (fontSize / font.unitsPerEm) + letterEm * fontSize;
     }
-    page.drawSvgPath(pathData, { color: nameColor });
+    page.drawSvgPath(pathData, {
+      color: nameColor,
+      thickness: 0
+    });
   }
 
   // 5) 로고 SVG 그리기 함수
@@ -61,17 +60,17 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
 
   // 6) 앞면 그리기
   await drawLogo(frontPage, 'logos/front_left.svg', 7,  7,    37.155, 7);
-  await drawLogo(frontPage, 'logos/front_right.svg',69, 6,    19,     14.385);
+  await drawLogo(frontPage, 'logos/front_right.svg',69, 6,   19,     14.385);
   drawTextPath(frontPage, fontDisplay, formData.kor_name,   19.034,21.843,13,0.3);
-  drawTextPath(frontPage, fontTextB,   formData.kor_dept,   19.034,31.747, 9,0);
-  drawTextPath(frontPage, fontTextB,   formData.kor_title,  19.034,36.047, 9,0);
-  drawTextPath(frontPage, fontTextL,   formData.phone,      19.034,40.000, 8,0);
-  drawTextPath(frontPage, fontTextL,   formData.email_id + '@alda.ai', 19.034,44.000,8,0);
+  drawTextPath(frontPage, fontTextB,   formData.kor_dept,   19.034,31.747,9,0);
+  drawTextPath(frontPage, fontTextB,   formData.kor_title,  19.034,36.047,9,0);
+  drawTextPath(frontPage, fontTextL,   formData.phone,      19.034,40.000,8,0);
+  drawTextPath(frontPage, fontTextL,   formData.email_id + '@alda.ai',19.034,44.000,8,0);
 
   // 7) 뒷면 그리기
   await drawLogo(backPage, 'logos/back_left.svg', 7, 7, 38.228,5.9);
   drawTextPath(backPage, fontDisplay, formData.eng_name.toUpperCase(),       19.034,21.843,13,0.3);
-  drawTextPath(backPage, fontTextB,   formData.eng_dept + ' / ' + formData.eng_title, 19.034,31.747,9,0);
+  drawTextPath(backPage, fontTextB,   formData.eng_dept + ' / ' + formData.eng_title,19.034,31.747,9,0);
 
   // 8) PDF 저장 & 다운로드
   const pdfBytes = await pdfDoc.save();
