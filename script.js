@@ -1,4 +1,5 @@
 // script.js (UMD 방식, OTF 지원 + 3개 KBFG 폰트 적용)
+console.log('페이지 수:', pdfDoc.getPages().length);
 
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
