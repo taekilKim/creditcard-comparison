@@ -1,108 +1,54 @@
-// script.js (UMD 방식, console.log로 페이지 수 확인 포함)
-
+// script.js
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const formData = Object.fromEntries(new FormData(e.target));
+  const data = Object.fromEntries(new FormData(e.target));
 
-  //
-  // 1) 템플릿 PDF 불러오기 (2페이지: 앞면, 뒷면)
-  //
+  // 1) PDF 불러오기
   const tplBytes = await fetch('templates/kbfintech_template.pdf')
-    .then(r => {
-      if (!r.ok) throw new Error(`템플릿 로드 실패: ${r.status}`);
-      return r.arrayBuffer();
-    });
+    .then(r => r.ok ? r.arrayBuffer() : Promise.reject(`템플릿 로드 실패 ${r.status}`));
   const pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
+  const [frontPage, backPage] = pdfDoc.getPages();
 
-  // load 직후 페이지 수 확인
-  console.log('PDF 페이지 수:', pdfDoc.getPages().length);
+  // 2) 폰트 로드
+  const [dispBuf, bBuf, lBuf] = await Promise.all([
+    fetch('fonts/KBFGDisplayM.otf').then(r=>r.arrayBuffer()),
+    fetch('fonts/KBFGTextB.otf')  .then(r=>r.arrayBuffer()),
+    fetch('fonts/KBFGTextL.otf')  .then(r=>r.arrayBuffer()),
+  ]);
+  const fontDisplay = opentype.parse(dispBuf);
+  const fontTextB   = opentype.parse(bBuf);
+  const fontTextL   = opentype.parse(lBuf);
 
-  // 페이지 배열 확보, 없으면 뒷면은 새로 추가
-  const pages     = pdfDoc.getPages();
-  const frontPage = pages[0];
-  const backPage  = pages[1] || pdfDoc.addPage([92 * 2.8346, 52 * 2.8346]);
+  // 3) CMYK 색상 (Pantone 404C)
+  const txtColor = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
 
-  //
-  // 2) KBFG OTF 폰트 로드 (DisplayM, TextB, TextL)
-  //
-  let fontDisplay, fontTextB, fontTextL;
-  try {
-    fontDisplay = await new Promise((res, rej) =>
-      opentype.load('fonts/KBFGDisplayM.otf', (err, f) => err ? rej(err) : res(f))
-    );
-    fontTextB = await new Promise((res, rej) =>
-      opentype.load('fonts/KBFGTextB.otf', (err, f) => err ? rej(err) : res(f))
-    );
-    fontTextL = await new Promise((res, rej) =>
-      opentype.load('fonts/KBFGTextL.otf', (err, f) => err ? rej(err) : res(f))
-    );
-  } catch (err) {
-    console.error('폰트 로딩 오류:', err);
-    return;
-  }
-
-  //
-  // 3) CMYK 색상 정의 (Pantone 404C)
-  //
-  const nameColor = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
-
-  //
-  // 4) 텍스트 Path 그리기 함수
-  //
-  function drawTextPath(page, font, text, mmX, mmY, fontSize, letterEm) {
-    const x = mmX * 2.8346;
-    const y = mmY * 2.8346;
-    let cursor = x;
-    let pathData = '';
-    const glyphs = font.stringToGlyphs(text);
-    for (const g of glyphs) {
-      const p = g.getPath(cursor, y, fontSize);
+  // 4) Path 오버레이 함수
+  function drawTextPath(page, font, text, mmX, mmY, ptSize, em) {
+    const x0 = mmX * 2.8346;
+    const y0 = mmY * 2.8346;
+    let cursor = x0, pathData = '';
+    font.stringToGlyphs(text).forEach(g => {
+      const p = g.getPath(cursor, y0, ptSize);
       pathData += p.toPathData(2);
-      cursor += g.advanceWidth * (fontSize / font.unitsPerEm) + letterEm * fontSize;
-    }
-    page.drawSvgPath(pathData, {
-      color: nameColor,
-      thickness: 0
+      cursor  += g.advanceWidth * (ptSize / font.unitsPerEm) + em * ptSize;
     });
+    page.drawSvgPath(pathData, { color: txtColor, thickness: 0 });
   }
 
-  //
-  // 5) 로고 SVG 그리기 함수
-  //
-  async function drawLogo(page, svgUrl, mmX, mmY, mmW, mmH) {
-    const svgText = await fetch(svgUrl).then(r => {
-      if (!r.ok) throw new Error(`SVG 로드 실패: ${svgUrl}`);
-      return r.text();
-    });
-    page.drawSvgPath(svgText, {
-      x:      mmX * 2.8346,
-      y:      page.getHeight() - mmY * 2.8346 - mmH * 2.8346,
-      width:  mmW * 2.8346,
-      height: mmH * 2.8346,
-    });
-  }
+  // 5) 앞면 텍스트
+  drawTextPath(frontPage, fontDisplay, data.kor_name  , 19.034, 21.843, 13, 0.3);
+  drawTextPath(frontPage, fontTextB  , data.kor_dept  , 19.034, 31.747,  9, 0  );
+  if (data.kor_title)
+    drawTextPath(frontPage, fontTextB, data.kor_title , 19.034, 36.047,  9, 0  );
+  drawTextPath(frontPage, fontTextL, data.phone      , 19.034, 40.000,  8, 0  );
+  drawTextPath(frontPage, fontTextL, data.email_id + '@alda.ai', 19.034, 44.000, 8, 0);
 
-  //
-  // 6) 앞면 그리기
-  //
-  await drawLogo(frontPage, 'logos/front_left.svg',  7,   7,    37.155, 7);
-  await drawLogo(frontPage, 'logos/front_right.svg', 69,  6,    19,     14.385);
-  drawTextPath(frontPage, fontDisplay, formData.kor_name,   19.034, 21.843, 13, 0.3);
-  drawTextPath(frontPage, fontTextB,   formData.kor_dept,   19.034, 31.747,  9, 0);
-  drawTextPath(frontPage, fontTextB,   formData.kor_title,  19.034, 36.047,  9, 0);
-  drawTextPath(frontPage, fontTextL,   formData.phone,      19.034, 40.000,  8, 0);
-  drawTextPath(frontPage, fontTextL,   formData.email_id + '@alda.ai', 19.034, 44.000, 8, 0);
+  // 6) 뒷면 텍스트
+  drawTextPath(backPage, fontDisplay, (data.eng_name||'').toUpperCase(), 19.034, 21.843, 13, 0.3);
+  const deptTitle = [data.eng_dept, data.eng_title].filter(Boolean).join(' / ');
+  drawTextPath(backPage, fontTextB, deptTitle, 19.034, 31.747, 9, 0);
 
-  //
-  // 7) 뒷면 그리기
-  //
-  await drawLogo(backPage, 'logos/back_left.svg', 7, 7, 38.228, 5.9);
-  drawTextPath(backPage, fontDisplay, formData.eng_name.toUpperCase(),                       19.034, 21.843, 13, 0.3);
-  drawTextPath(backPage, fontTextB,   formData.eng_dept + ' / ' + formData.eng_title,         19.034, 31.747,  9, 0);
-
-  //
-  // 8) PDF 저장 & 다운로드
-  //
+  // 7) PDF 저장 & 다운로드
   const pdfBytes = await pdfDoc.save();
   const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
   const link     = document.createElement('a');
