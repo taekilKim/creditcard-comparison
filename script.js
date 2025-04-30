@@ -51,53 +51,42 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   };
   console.log('4) 폰트 로드 완료');
 
-  // 5) 레이아웃 · 스타일
+  // 5) 레이아웃 · 스타일 정의 (RGB로 변경)
   console.log('5) 레이아웃 정의');
   const mm2pt = mm => mm * 2.8346;
-  const COLOR_404C = PDFLib.cmyk(0,0.10,0.20,0.65);
+  // #7C7366 → rgb(124/255,115/255,102/255)
+  const COLOR_RGB = PDFLib.rgb(124/255, 115/255, 102/255);
   const layout = {
-    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_404C },
-    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.Display, color:COLOR_404C },
-    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_404C },
-    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_404C },
-    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_404C },
-    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_404C },
-    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_404C },
+    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_RGB },
+    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.Display, color:COLOR_RGB },
+    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_RGB },
+    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_RGB },
+    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_RGB },
+    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_RGB },
+    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_RGB },
   };
   console.table(layout);
 
-  // 6) Path 오버레이 함수 (fillColor 로 수정)
+  // 6) Path 오버레이 함수 (fillColor=RGB)
   function drawTextPath(page, cfg, text, key) {
     console.group(`▶ drawTextPath [${key}]`);
     console.log('- text:', `"${text}"`);
     if (!text) { console.warn('  (빈 문자열, 스킵)'); console.groupEnd(); return; }
 
-    const glyphs = cfg.font.stringToGlyphs(text);
-    console.log('- glyphs:', glyphs.length);
-    if (!glyphs.length) { console.error('  (glyphs 없음!)'); console.groupEnd(); return; }
-
     let cursorX = mm2pt(cfg.x);
     const y = page.getHeight() - mm2pt(cfg.y);
+    const glyphs = cfg.font.stringToGlyphs(text);
     let pathData = '';
 
     glyphs.forEach((g, i) => {
       const p = g.getPath(cursorX, y, cfg.size);
-      const d = p.toPathData(2);
-      console.log(`   • glyph[${i}] len=${d.length}`);
-      pathData += d;
+      pathData += p.toPathData(2);
       cursorX += g.advanceWidth*(cfg.size/cfg.font.unitsPerEm) + cfg.em*cfg.size;
     });
-
-    if (!pathData) {
-      console.error('  (pathData가 비어있음!)');
-      console.groupEnd();
-      return;
-    }
     console.log('- 총 pathData 길이:', pathData.length);
 
-    // ★ 여기만 바뀌었습니다 ★
     page.drawSvgPath(pathData, {
-      fillColor: cfg.color,   // ← fillColor 로 벡터 내부를 채웁니다
+      fillColor: cfg.color,
       borderWidth: 0,
     });
     console.log('- drawSvgPath 완료');
