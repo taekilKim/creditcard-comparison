@@ -1,15 +1,13 @@
-export async function loadFonts(map) {
-  console.log('4) loadFonts 시작');
-  const result = {};
-  for (const [key, url] of Object.entries(map)) {
-    console.log(`  • ${key}: ${url}`);
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`폰트 로드 실패 ${key}: ${res.status}`);
-    const bytes = await res.arrayBuffer();
-    const font = fontkit.create(bytes);
-    console.log(`    ↳ ${key}.unitsPerEm =`, font.unitsPerEm);
-    result[key] = font;
-  }
-  console.log('4) loadFonts 완료');
-  return result;
+export async function savePdf(pdfDoc, filename) {
+  console.log('9) savePdf 시작');
+  const bytes = await pdfDoc.save();
+  console.log('   ↳ PDF 바이트 크기:', bytes.byteLength);
+
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+
+  console.log('   ↳ 다운로드 트리거 완료');
 }
