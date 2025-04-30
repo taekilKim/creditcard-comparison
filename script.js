@@ -31,14 +31,15 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   // ─── 디버그 #1: 내장 Helvetica 폰트 임베드 후 drawText 테스트 ───
   const helv = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
   console.log('4) 헬베티카 임베드 완료');
-  frontPage.drawText('테스트 출력', {
+  // (기존 drawText 디버그 부분)
+  frontPage.drawText('test print', {
     x:  mm2pt(19.034),
     y:  frontPage.getHeight() - mm2pt(21.843),
     size: 13,
     font: helv,
-    color: PDFLib.cmyk(0, 0.10, 0.20, 0.65) // Pantone 404C
+    color: PDFLib.cmyk(0, 0.10, 0.20, 0.65)
   });
-  console.log('5) [디버그] drawText("테스트 출력") 완료');
+  console.log('5) [디버그] drawText("test print") 완료');
 
   // 4) opentype.js 로 KBFG 폰트 로드
   const fontDisp = await new Promise((res, rej) =>
