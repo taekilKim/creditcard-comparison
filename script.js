@@ -1,6 +1,7 @@
 // script.js
 
-// PDF-lib, fontkit UMD가 이미 로드된 상태여야 합니다.
+// PDF-lib & fontkit이 index.html에서 이미 로드된 상태여야 합니다.
+// (opentype.js, drawSvgPath 코드는 더 이상 사용하지 않습니다)
 
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -22,29 +23,34 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   const fontB    = await pdfDoc.embedFont(bufB);
   const fontL    = await pdfDoc.embedFont(bufL);
 
-  // 3) CMYK 색상 정의
+  // 3) CMYK 색상(Pantone 404C)
   const txtColor = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
 
   // 단위 변환 헬퍼
   const mm2pt = mm => mm * 2.8346;
-  const pages  = pdfDoc.getPages();
-  const front  = pages[0];
-  const back   = pages[1];
+  const [front, back] = pdfDoc.getPages();
 
-  // 4) drawText 헬퍼
-  function drawText(page, text, font, mmX, mmY, sizePt, letterEm = 0, lineHt = null) {
+  // 4) drawText 헬퍼 (lineHeight는 값이 있을 때만 추가)
+  function drawText(page, text, font, mmX, mmY, sizePt, letterEm = 0, lineHt) {
     if (!text) return;
     const x = mm2pt(mmX);
     const y = page.getHeight() - mm2pt(mmY);
-    page.drawText(text, {
+
+    // 기본 옵션
+    const opts = {
       x,
       y,
       size: sizePt,
       font,
       color: txtColor,
       letterSpacing: sizePt * letterEm,
-      lineHeight: lineHt,
-    });
+    };
+    // lineHeight가 명시적 숫자일 때만 추가
+    if (typeof lineHt === 'number') {
+      opts.lineHeight = lineHt;
+    }
+
+    page.drawText(text, opts);
   }
 
   // 5) 앞면
