@@ -1,5 +1,5 @@
 // script.js
-// PDF-lib + Fontkit UMD 환경
+// PDF-lib + opentype.js UMD 환경
 
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -23,12 +23,16 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
     return;
   }
 
-  // 3) PDFDocument 생성 + Fontkit 등록
+  // 3) PDFDocument 생성 및 AcroForm 평면화
   let pdfDoc;
   try {
     pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
     console.log('3) PDF 로드 완료, 페이지 수:', pdfDoc.getPageCount());
-    pdfDoc.registerFontkit(fontkit);
+    const form = pdfDoc.getForm();
+    if (form) {
+      form.flatten(); 
+      console.log('   → AcroForm(입력 필드) 평면화 완료');
+    }
   } catch (err) {
     console.error('3) PDFDocument.load 실패:', err);
     console.groupEnd();
@@ -36,77 +40,95 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   }
   const [frontPage, backPage] = pdfDoc.getPages();
 
-  // 4) 커스텀 폰트 임베드
-  console.log('4) 커스텀 폰트 임베드 시작');
-  async function embed(name, url) {
-    console.log(`  • ${name} → ${url}`);
-    const bytes = await fetch(url).then(r => {
-      if (!r.ok) throw new Error(r.status);
+  // 4) opentype.js 폰트 로드
+  console.log('4) opentype.js 폰트 로드 시작');
+  const loadFont = async (key, url) => {
+    console.log(`  • [${key}] ${url}`);
+    const buf = await fetch(url).then(r => {
+      if (!r.ok) throw new Error(`Font fetch ${r.status}`);
       return r.arrayBuffer();
     });
-    const font = await pdfDoc.embedFont(bytes);
-    console.log(`    → ${name} 임베드 완료`);
+    const font = opentype.parse(buf);
+    console.log(`    → unitsPerEm:`, font.unitsPerEm);
     return font;
-  }
-  const fonts = {
-    Display: await embed('DisplayM', '/fonts/KBFGDisplayM.otf'),
-    TextB:    await embed('TextB',    '/fonts/KBFGTextB.otf'),
-    TextL:    await embed('TextL',    '/fonts/KBFGTextL.otf'),
   };
+  const fonts = {
+    Display: await loadFont('Display', '/fonts/KBFGDisplayM.otf'),
+    TextB:    await loadFont('TextB',    '/fonts/KBFGTextB.otf'),
+    TextL:    await loadFont('TextL',    '/fonts/KBFGTextL.otf'),
+  };
+  console.log('4) 폰트 로드 완료');
 
   // 5) 레이아웃 · 스타일 정의
   console.log('5) 레이아웃 정의');
   const mm2pt = mm => mm * 2.8346;
-  const COLOR_404C = PDFLib.cmyk(0,0.10,0.20,0.65);
+  const COLOR_404C = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
   const layout = {
-    kor_name:  { x:19.034, y:21.843, size:13,   spacing:0.3, font:fonts.Display, color:COLOR_404C },
-    kor_dept:  { x:19.034, y:31.747, size: 9,   spacing:0.0, font:fonts.Display, color:COLOR_404C },
-    kor_title: { x:19.034, y:36.047, size: 9,   spacing:0.0, font:fonts.TextB,    color:COLOR_404C },
-    phone:     { x:19.034, y:40.000, size: 8,   spacing:0.0, font:fonts.TextL,    color:COLOR_404C },
-    email:     { x:19.034, y:44.000, size: 8,   spacing:0.0, font:fonts.TextL,    color:COLOR_404C },
-    eng_name:  { x:19.034, y:21.843, size:13,   spacing:0.3, font:fonts.Display, color:COLOR_404C },
-    eng_dept:  { x:19.034, y:31.747, size: 9,   spacing:0.0, font:fonts.TextB,    color:COLOR_404C },
+    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_404C },
+    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.Display, color:COLOR_404C },
+    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_404C },
+    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_404C },
+    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_404C },
+    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_404C },
+    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_404C },
   };
   console.table(layout);
 
-  // 6) drawText 래퍼
-  function drawField(page, cfg, text, key) {
-    console.group(`▶ draw [${key}]`);
-    console.log('- text:', text);
+  // 6) Path 오버레이 함수 (fillColor)
+  function drawTextPath(page, cfg, text, key) {
+    console.group(`▶ drawTextPath [${key}]`);
+    console.log('- text:', `"${text}"`);
     if (!text) { console.warn('  (빈 문자열, 스킵)'); console.groupEnd(); return; }
-    const options = {
-      x: mm2pt(cfg.x),
-      y: page.getHeight() - mm2pt(cfg.y),
-      size: cfg.size,
-      font: cfg.font,
-      color: cfg.color,
-      characterSpacing: cfg.spacing * cfg.size,
-    };
-    page.drawText(text, options);
-    console.log('- drawText 완료:', options);
+
+    const glyphs = cfg.font.stringToGlyphs(text);
+    console.log('- glyphs:', glyphs.length);
+    if (glyphs.length === 0) {
+      console.error('  (glyphs 없음!)');
+      console.groupEnd();
+      return;
+    }
+
+    let cursorX = mm2pt(cfg.x);
+    const y = page.getHeight() - mm2pt(cfg.y);
+    let pathData = '';
+
+    glyphs.forEach((g, i) => {
+      const p = g.getPath(cursorX, y, cfg.size);
+      const d = p.toPathData(2);
+      console.log(`   • glyph[${i}] len=${d.length}`);
+      pathData += d;
+      cursorX += g.advanceWidth * (cfg.size / cfg.font.unitsPerEm) + cfg.em * cfg.size;
+    });
+
+    console.log('- 총 pathData 길이:', pathData.length);
+    page.drawSvgPath(pathData, {
+      fillColor: cfg.color,
+      borderWidth: 0,
+    });
+    console.log('- drawSvgPath 완료');
     console.groupEnd();
   }
 
-  // 7) 앞면
+  // 7) 앞면 오버레이
   console.log('7) 앞면 오버레이');
-  drawField(frontPage, layout.kor_name,  data.kor_name,  'kor_name');
-  drawField(frontPage, layout.kor_dept,  data.kor_dept,  'kor_dept');
-  drawField(frontPage, layout.kor_title, data.kor_title, 'kor_title');
-  drawField(frontPage, layout.phone,     data.phone,     'phone');
-  drawField(frontPage, layout.email,     `${data.email_id}@alda.ai`, 'email');
+  drawTextPath(frontPage, layout.kor_name,  data.kor_name,  'kor_name');
+  drawTextPath(frontPage, layout.kor_dept,  data.kor_dept,  'kor_dept');
+  drawTextPath(frontPage, layout.kor_title, data.kor_title, 'kor_title');
+  drawTextPath(frontPage, layout.phone,     data.phone,     'phone');
+  drawTextPath(frontPage, layout.email,     `${data.email_id}@alda.ai`, 'email');
 
-  // 8) 뒷면
+  // 8) 뒷면 오버레이
   console.log('8) 뒷면 오버레이');
-  drawField(backPage, layout.eng_name,  (data.eng_name||'').toUpperCase(), 'eng_name');
-  const deptLine = [data.eng_dept, data.eng_title].filter(Boolean).join(' / ');
-  drawField(backPage, layout.eng_dept,  deptLine, 'eng_dept');
+  drawTextPath(backPage, layout.eng_name, (data.eng_name || '').toUpperCase(), 'eng_name');
+  const deptTitle = [data.eng_dept, data.eng_title].filter(Boolean).join(' / ');
+  drawTextPath(backPage, layout.eng_dept, deptTitle, 'eng_dept');
 
   // 9) 저장 & 다운로드
   console.log('9) PDF 저장 & 다운로드');
   try {
-    const pdfBytes = await pdfDoc.save();
-    console.log('- PDF 크기:', pdfBytes.byteLength, 'bytes');
-    const blob = new Blob([pdfBytes], { type:'application/pdf' });
+    const bytes = await pdfDoc.save();
+    console.log('- PDF 크기:', bytes.byteLength, 'bytes');
+    const blob = new Blob([bytes], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'namecard_final.pdf';
