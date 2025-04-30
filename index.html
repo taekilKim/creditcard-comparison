@@ -6,23 +6,23 @@
 
   <!-- 1) PDF-lib UMD -->
   <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
-  <!-- 2) opentype.js UMD -->
-  <script src="https://cdn.jsdelivr.net/npm/opentype.js@latest/dist/opentype.min.js"></script>
+  <!-- 1-1) fontkit UMD (이걸 추가!) -->
+  <script src="https://cdn.jsdelivr.net/npm/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
   <!-- 3) 우리 스크립트 -->
-  <script defer src="./script.js"></script>
+  <script defer src="/script.js"></script>
 </head>
 <body>
   <h2>명함 정보 입력</h2>
   <form id="infoForm">
-    <label>국문 이름: <input name="kor_name" required /></label><br/>
-    <label>국문 소속: <input name="kor_dept" required /></label><br/>
-    <label>국문 직함: <input name="kor_title" /></label><br/>
-    <label>전화번호: <input name="phone" required /></label><br/>
+    <label>국문 이름:  <input name="kor_name" required /></label><br/>
+    <label>국문 소속:  <input name="kor_dept" required /></label><br/>
+    <label>국문 직함:  <input name="kor_title"      /></label><br/>
+    <label>전화번호:  <input name="phone"    required /></label><br/>
     <label>이메일 ID: <input name="email_id" required /></label><br/>
     <hr/>
-    <label>영문 이름: <input name="eng_name" required /></label><br/>
-    <label>영문 소속: <input name="eng_dept" required /></label><br/>
-    <label>영문 직함: <input name="eng_title" /></label><br/>
+    <label>영문 이름:  <input name="eng_name" required /></label><br/>
+    <label>영문 소속:  <input name="eng_dept" required /></label><br/>
+    <label>영문 직함:  <input name="eng_title"     /></label><br/>
     <button type="submit">PDF 다운로드</button>
   </form>
 </body>
