@@ -4,25 +4,34 @@
   <meta charset="UTF-8" />
   <title>명함 PDF 생성기</title>
 
+<<<<<<< Updated upstream
    <!-- 1) PDF-lib UMD -->
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <!-- 2) Fontkit UMD (커스텀 폰트 임베드용) -->
   <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
   <!-- 3) 우리 스크립트 -->
   <script defer src="./script.js"></script>
+=======
+  <!-- PDF-lib UMD -->
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <!-- Fontkit UMD (커스텀 폰트 임베드용) -->
+  <script src="https://unpkg.com/@pdf-lib/fontkit/dist/fontkit.umd.min.js"></script>
+  <!-- entry point (ES module) -->
+  <script type="module" src="./script.js"></script>
+>>>>>>> Stashed changes
 </head>
 <body>
   <h2>명함 정보 입력</h2>
   <form id="infoForm">
-    <label>국문 이름:  <input name="kor_name" required /></label><br/>
-    <label>국문 소속:  <input name="kor_dept" required /></label><br/>
-    <label>국문 직함:  <input name="kor_title"      /></label><br/>
-    <label>전화번호:  <input name="phone"    required /></label><br/>
+    <label>국문 이름: <input name="kor_name" required /></label><br/>
+    <label>국문 소속: <input name="kor_dept" required /></label><br/>
+    <label>국문 직함: <input name="kor_title" /></label><br/>
+    <label>전화번호: <input name="phone" required /></label><br/>
     <label>이메일 ID: <input name="email_id" required /></label><br/>
     <hr/>
-    <label>영문 이름:  <input name="eng_name" required /></label><br/>
-    <label>영문 소속:  <input name="eng_dept" required /></label><br/>
-    <label>영문 직함:  <input name="eng_title"     /></label><br/>
+    <label>영문 이름: <input name="eng_name" required /></label><br/>
+    <label>영문 소속: <input name="eng_dept" required /></label><br/>
+    <label>영문 직함: <input name="eng_title" /></label><br/>
     <button type="submit">PDF 다운로드</button>
   </form>
 </body>

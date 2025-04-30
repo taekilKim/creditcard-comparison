@@ -1,7 +1,16 @@
+<<<<<<< Updated upstream
 // script.js
 // PDF-lib + fontkit UMD 환경
+=======
+import { loadTemplate }   from './modules/template.js';
+import { loadFonts }      from './modules/fonts.js';
+import { defineLayout }   from './modules/layout.js';
+import { drawFront,
+         drawBack }      from './modules/draw.js';
+import { savePdf }        from './modules/save.js';
+>>>>>>> Stashed changes
 
-document.getElementById('infoForm').addEventListener('submit', async (e) => {
+document.getElementById('infoForm').addEventListener('submit', async e => {
   e.preventDefault();
   console.group('🖨️ 명함 생성 워크플로우 시작');
 
@@ -9,20 +18,10 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   const data = Object.fromEntries(new FormData(e.target));
   console.log('1) 폼 데이터:', data);
 
-  // 2) PDF 템플릿 로드
-  let tplBytes;
-  try {
-    console.log('2) PDF 템플릿 로드 시작');
-    const res = await fetch('/templates/kbfintech_template.pdf');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    tplBytes = await res.arrayBuffer();
-    console.log('2) 로드 완료,', tplBytes.byteLength, 'bytes');
-  } catch (err) {
-    console.error('2) 템플릿 로드 실패:', err);
-    console.groupEnd();
-    return;
-  }
+  // 2) 템플릿 로드
+  const { pdfDoc, frontPage, backPage } = await loadTemplate('/templates/kbfintech_template.pdf');
 
+<<<<<<< Updated upstream
   // 3) PDFDocument 생성 & fontkit 등록
   let pdfDoc;
   try {
@@ -125,6 +124,25 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   } catch (err) {
     console.error('9) PDF 저장 실패:', err);
   }
+=======
+  // 3) 폰트 로드
+  const fonts = await loadFonts({
+    Display: '/fonts/KBFGDisplayM.otf',
+    TextB:   '/fonts/KBFGTextB.otf',
+    TextL:   '/fonts/KBFGTextL.otf',
+  });
+
+  // 4) 레이아웃 정의
+  const layout = defineLayout(fonts);
+  console.table(layout);
+
+  // 5) 앞/뒷면 오버레이
+  drawFront(frontPage, data, layout);
+  drawBack( backPage, data, layout);
+
+  // 6) PDF 저장 & 다운로드
+  await savePdf(pdfDoc, 'namecard_final.pdf');
+>>>>>>> Stashed changes
 
   console.groupEnd();
 });
