@@ -51,19 +51,30 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   };
   console.log('4) 폰트 로드 완료');
 
+  // PDFDocument.load 이후, drawTextPath 호출 전에
+  frontPage.drawRectangle({
+    x: 10,                // 단위: PDF point
+    y: 10,
+    width: 50,
+    height: 20,
+    color: PDFLib.rgb(1, 0, 0),
+    borderWidth: 0,
+  });
+  console.log('🟥 빨간 사각형 그리기 완료 (x=10,y=10,w=50,h=20)');
+  
   // 5) 레이아웃 · 스타일 정의 (RGB로 변경)
   console.log('5) 레이아웃 정의');
   const mm2pt = mm => mm * 2.8346;
   // #7C7366 → rgb(124/255,115/255,102/255)
-  const COLOR_RGB = PDFLib.rgb(124/255, 115/255, 102/255);
+  const COLOR_CMYK = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
   const layout = {
-    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_RGB },
-    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.Display, color:COLOR_RGB },
-    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_RGB },
-    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_RGB },
-    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_RGB },
-    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_RGB },
-    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_RGB },
+    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_CMYK },
+    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.Display, color:COLOR_CMYK },
+    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_CMYK },
+    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_CMYK },
+    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_CMYK },
+    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_CMYK },
+    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_CMYK },
   };
   console.table(layout);
 
