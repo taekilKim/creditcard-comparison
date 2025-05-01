@@ -67,7 +67,7 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
     }
 
     page.drawSvgPath(pathData, {
-      fillColor: cfg.color,
+      fillColor: PDFLib.rgb(1, 0, 0), // 강제 색상 테스트
       borderWidth: 0,
     });
 
