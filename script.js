@@ -76,6 +76,13 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   }
 
   // 6) 앞면
+  page.drawRectangle({
+  x: cursorX,
+  y: y,
+  width: 10,
+  height: 10,
+  color: rgb(1, 0, 0),
+  });
   drawTextPath(frontPage, layout.kor_name,  data.kor_name,  'kor_name');
   drawTextPath(frontPage, layout.kor_dept,  data.kor_dept,  'kor_dept');
   drawTextPath(frontPage, layout.kor_title, data.kor_title, 'kor_title');
