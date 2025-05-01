@@ -1,15 +1,13 @@
-
 // script.js
-// PDF-lib + fontkit UMD 환경
+// ———————————————————————————
+// 1) 의존 라이브러리 전역 객체 불러오기
+const { PDFDocument, rgb, cmyk } = PDFLib;
+const fontkit = window.fontkit;
+// (이 두 스크립트는 index.html 에 이미 <script> 로 로드되어 있습니다.)
+// ———————————————————————————
 
-import { loadTemplate }   from './modules/template.js';
-import { loadFonts }      from './modules/fonts.js';
-import { defineLayout }   from './modules/layout.js';
-import { drawFront,
-         drawBack }      from './modules/draw.js';
-import { savePdf }        from './modules/save.js';
-
-document.getElementById('infoForm').addEventListener('submit', async e => {
+// 2) 폼 제출 핸들러
+document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   console.group('🖨️ 명함 생성 워크플로우 시작');
 
@@ -18,22 +16,25 @@ document.getElementById('infoForm').addEventListener('submit', async e => {
   console.log('1) 폼 데이터:', data);
 
   // 2) 템플릿 로드
-  const { pdfDoc, frontPage, backPage } = await loadTemplate('/templates/kbfintech_template.pdf');
+  let tplBytes;
+  try {
+    console.log('2) PDF 템플릿 로드 시작');
+    const res = await fetch('/templates/kbfintech_template.pdf');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tplBytes = await res.arrayBuffer();
+    console.log('2) 로드 완료,', tplBytes.byteLength, 'bytes');
+  } catch (err) {
+    console.error('2) 템플릿 로드 실패:', err);
+    console.groupEnd();
+    return;
+  }
 
-<<<<<<< Updated upstream
-  // 3) PDFDocument 생성 & fontkit 등록
+  // 3) PDFDocument 생성 + Fontkit 등록
   let pdfDoc;
   try {
-    pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
-    // fontkit 이 없다는 에러 방지
+    pdfDoc = await PDFDocument.load(tplBytes);
     pdfDoc.registerFontkit(fontkit);
     console.log('3) PDF 로드 완료, 페이지 수:', pdfDoc.getPageCount());
-    // (옵션) AcroForm 필드 평면화
-    const form = pdfDoc.getForm();
-    if (form) {
-      form.flatten();
-      console.log('   → AcroForm 평면화 완료');
-    }
   } catch (err) {
     console.error('3) PDFDocument.load 실패:', err);
     console.groupEnd();
@@ -41,62 +42,63 @@ document.getElementById('infoForm').addEventListener('submit', async e => {
   }
   const [frontPage, backPage] = pdfDoc.getPages();
 
-  // 4) 폰트 로드 + embedFont
-  console.log('4) OTF 폰트 로드 + embed 시작');
-  const loadAndEmbed = async (url, key) => {
-    console.log(`  • [${key}] fetch ${url}`);
-    const buf = await fetch(url)
-      .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status));
-    const font = await pdfDoc.embedFont(buf, { subset: true });
-    console.log(`    → [${key}] embedFont 완료, 字形 수:`, font.getCharacterSet().length);
-    return font;
-  };
-  const embedded = {
-    Display: await loadAndEmbed('/fonts/KBFGDisplayM.otf', 'Display'),
-    TextB:    await loadAndEmbed('/fonts/KBFGTextB.otf',    'TextB'),
-    TextL:    await loadAndEmbed('/fonts/KBFGTextL.otf',    'TextL'),
-  };
-  console.log('4) 모든 폰트 embed 완료');
+  // 4) 커스텀 폰트 로드
+  console.log('4) 커스텀 폰트 로드 시작');
+  async function loadFont(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`폰트 로드 실패 ${url}: ${r.status}`);
+    return r.arrayBuffer();
+  }
+  const [displayBytes, textBBytes, textLBytes] = await Promise.all([
+    loadFont('/fonts/KBFGDisplayM.otf'),
+    loadFont('/fonts/KBFGTextB.otf'),
+    loadFont('/fonts/KBFGTextL.otf'),
+  ]);
+  const [fontDisplay, fontTextB, fontTextL] = await Promise.all([
+    pdfDoc.embedFont(displayBytes),
+    pdfDoc.embedFont(textBBytes),
+    pdfDoc.embedFont(textLBytes),
+  ]);
+  console.log('4) 폰트 로드 완료');
 
   // 5) 레이아웃 · 스타일 정의
   console.log('5) 레이아웃 정의');
   const mm2pt = mm => mm * 2.8346;
-  const COLOR_404C = PDFLib.cmyk(0,0.10,0.20,0.65);
+  const COLOR_404C = cmyk(0,0.10,0.20,0.65);
   const layout = {
-    kor_name:  { x:19.034, y:21.843, size:13, font:embedded.Display, color:COLOR_404C },
-    kor_dept:  { x:19.034, y:31.747, size: 9, font:embedded.Display, color:COLOR_404C },
-    kor_title: { x:19.034, y:36.047, size: 9, font:embedded.TextB,    color:COLOR_404C },
-    phone:     { x:19.034, y:40.000, size: 8, font:embedded.TextL,    color:COLOR_404C },
-    email:     { x:19.034, y:44.000, size: 8, font:embedded.TextL,    color:COLOR_404C },
-    eng_name:  { x:19.034, y:21.843, size:13, font:embedded.Display, color:COLOR_404C },
-    eng_dept:  { x:19.034, y:31.747, size: 9, font:embedded.TextB,    color:COLOR_404C },
+    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fontDisplay, color:COLOR_404C },
+    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fontDisplay, color:COLOR_404C },
+    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fontTextB,    color:COLOR_404C },
+    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fontTextL,    color:COLOR_404C },
+    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fontTextL,    color:COLOR_404C },
+    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fontDisplay, color:COLOR_404C },
+    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fontTextB,    color:COLOR_404C },
   };
   console.table(layout);
 
-  // 6) drawText 유틸
+  // 6) 텍스트 벡터 오버레이 함수
   function drawText(page, cfg, text, key) {
     console.group(`▶ drawText [${key}]`);
-    if (!text) {
-      console.warn('  (빈 문자열, 스킵)');
-      console.groupEnd();
-      return;
-    }
-    const px  = mm2pt(cfg.x);
-    const py  = page.getHeight() - mm2pt(cfg.y) - cfg.size;
-    console.log(`  - 위치: ${px.toFixed(1)},${py.toFixed(1)} pt, size: ${cfg.size}`);
+    console.log('  텍스트:', text);
+    if (!text) { console.warn('  빈 문자열, 스킵'); console.groupEnd(); return; }
+
+    // PDF-lib 의 embedFont 를 썼기 때문에, .drawText 로 간단히 그릴 수 있습니다.
+    // Path 벡터로 완벽하게 내보내고 싶다면 PDF-lib 에서 drawSvgPath 을 사용하세요.
     page.drawText(text, {
-      x: px,
-      y: py,
+      x: mm2pt(cfg.x),
+      y: page.getHeight() - mm2pt(cfg.y) - cfg.size,
       size: cfg.size,
       font: cfg.font,
       color: cfg.color,
+      lineHeight: cfg.size * 1.2,
     });
-    console.log('  - drawText 완료:', text);
+
+    console.log('  drawText 완료');
     console.groupEnd();
   }
 
   // 7) 앞면
-  console.log('7) 앞면 오버레이');
+  console.log('7) 앞면 그리기');
   drawText(frontPage, layout.kor_name,  data.kor_name,  'kor_name');
   drawText(frontPage, layout.kor_dept,  data.kor_dept,  'kor_dept');
   drawText(frontPage, layout.kor_title, data.kor_title, 'kor_title');
@@ -104,44 +106,21 @@ document.getElementById('infoForm').addEventListener('submit', async e => {
   drawText(frontPage, layout.email,     `${data.email_id}@alda.ai`, 'email');
 
   // 8) 뒷면
-  console.log('8) 뒷면 오버레이');
+  console.log('8) 뒷면 그리기');
   drawText(backPage, layout.eng_name, (data.eng_name||'').toUpperCase(), 'eng_name');
-  const deptTitle = [data.eng_dept, data.eng_title].filter(Boolean).join(' / ');
-  drawText(backPage, layout.eng_dept, deptTitle, 'eng_dept');
+  const dt  = [data.eng_dept, data.eng_title].filter(Boolean).join(' / ');
+  drawText(backPage, layout.eng_dept, dt, 'eng_dept');
 
   // 9) 저장 & 다운로드
-  console.log('9) PDF 저장 & 다운로드');
-  try {
-    const pdfBytes = await pdfDoc.save();
-    console.log('- PDF 크기:', pdfBytes.byteLength, 'bytes');
-    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'namecard_final.pdf';
-    a.click();
-    console.log('- Download 트리거 완료');
-  } catch (err) {
-    console.error('9) PDF 저장 실패:', err);
-  }
-=======
-  // 3) 폰트 로드
-  const fonts = await loadFonts({
-    Display: '/fonts/KBFGDisplayM.otf',
-    TextB:   '/fonts/KBFGTextB.otf',
-    TextL:   '/fonts/KBFGTextL.otf',
-  });
-
-  // 4) 레이아웃 정의
-  const layout = defineLayout(fonts);
-  console.table(layout);
-
-  // 5) 앞/뒷면 오버레이
-  drawFront(frontPage, data, layout);
-  drawBack( backPage, data, layout);
-
-  // 6) PDF 저장 & 다운로드
-  await savePdf(pdfDoc, 'namecard_final.pdf');
->>>>>>> Stashed changes
+  console.log('9) PDF 저장 시작');
+  const pdfBytes = await pdfDoc.save();
+  console.log('   ↳ PDF 크기:', pdfBytes.byteLength, 'bytes');
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'namecard_final.pdf';
+  a.click();
+  console.log('   ↳ 다운로드 트리거 완료');
 
   console.groupEnd();
 });
