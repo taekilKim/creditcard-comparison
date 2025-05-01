@@ -41,48 +41,48 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   };
 
   // 5) 벡터 텍스트 출력 함수
-  function drawTextPath(page, cfg, text, label) {
-    console.group(`▶ drawTextPath [${label}]`);
-    if (!text) {
-      console.warn('⚠️ 텍스트 없음, 스킵');
-      console.groupEnd();
-      return;
-    }
+  function drawTextPath(page, cfg, text, key) {
+  console.group(`▶ drawTextPath [${key}]`);
+  console.log('- text:', `"${text}"`);
+  if (!text) { console.warn('  (빈 문자열, 스킵)'); console.groupEnd(); return; }
 
-    const glyphs = cfg.font.stringToGlyphs(text);
-    const y = page.getHeight() - mm2pt(cfg.y);
-    let cursorX = mm2pt(cfg.x);
-    let pathData = '';
+  const glyphs = cfg.font.stringToGlyphs(text);
+  if (!glyphs.length) { console.error('  (glyphs 없음!)'); console.groupEnd(); return; }
 
-    glyphs.forEach(g => {
-      const p = g.getPath(cursorX, y, cfg.size);
-      pathData += p.toPathData(2);
-      cursorX += g.advanceWidth * (cfg.size / cfg.font.unitsPerEm) + cfg.em * cfg.size;
-    });
+  let cursorX = mm2pt(cfg.x);
+  const y = page.getHeight() - mm2pt(cfg.y); // PDF-lib 좌표계 보정
+  let pathData = '';
 
-    if (!pathData) {
-      console.error('❌ pathData 없음');
-      console.groupEnd();
-      return;
-    }
+  // 👉 디버깅용 빨간 사각형
+  page.drawRectangle({
+    x: cursorX,
+    y: y,
+    width: 10,
+    height: 10,
+    color: PDFLib.rgb(1, 0, 0),
+  });
 
-    page.drawSvgPath(pathData, {
-      fillColor: PDFLib.rgb(1, 0, 0), // 빨간색으로 강제 출력
-      borderWidth: 0.1,               // 0에서 0.1로 설정해서 렌더링 누락 회피
-    });
+  glyphs.forEach((g, i) => {
+    const p = g.getPath(cursorX, y, cfg.size);
+    pathData += p.toPathData(2);
+    cursorX += g.advanceWidth * (cfg.size / cfg.font.unitsPerEm) + cfg.em * cfg.size;
+  });
 
-    console.log('✔️ pathData 길이:', pathData.length);
+  if (!pathData) {
+    console.error('  (pathData가 비어있음!)');
     console.groupEnd();
+    return;
   }
 
-  // 6) 앞면
-  page.drawRectangle({
-  x: cursorX,
-  y: y,
-  width: 10,
-  height: 10,
-  color: rgb(1, 0, 0),
+  page.drawSvgPath(pathData, {
+    fillColor: cfg.color,
+    borderWidth: 0,
   });
+
+  console.groupEnd();
+}
+
+  // 6) 앞면
   drawTextPath(frontPage, layout.kor_name,  data.kor_name,  'kor_name');
   drawTextPath(frontPage, layout.kor_dept,  data.kor_dept,  'kor_dept');
   drawTextPath(frontPage, layout.kor_title, data.kor_title, 'kor_title');
