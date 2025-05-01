@@ -1,14 +1,13 @@
-<<<<<<< Updated upstream
+
 // script.js
 // PDF-lib + fontkit UMD 환경
-=======
+
 import { loadTemplate }   from './modules/template.js';
 import { loadFonts }      from './modules/fonts.js';
 import { defineLayout }   from './modules/layout.js';
 import { drawFront,
          drawBack }      from './modules/draw.js';
 import { savePdf }        from './modules/save.js';
->>>>>>> Stashed changes
 
 document.getElementById('infoForm').addEventListener('submit', async e => {
   e.preventDefault();
