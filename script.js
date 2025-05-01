@@ -67,8 +67,8 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
     }
 
     page.drawSvgPath(pathData, {
-      fillColor: PDFLib.rgb(1, 0, 0), // 강제 색상 테스트
-      borderWidth: 0,
+      fillColor: PDFLib.rgb(1, 0, 0), // 빨간색으로 강제 출력
+      borderWidth: 0.1,               // 0에서 0.1로 설정해서 렌더링 누락 회피
     });
 
     console.log('✔️ pathData 길이:', pathData.length);
