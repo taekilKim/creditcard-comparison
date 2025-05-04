@@ -1,24 +1,43 @@
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  console.group('🖨️ 명함 앞면 생성 시작');
+  console.group('🖨️ 명함 앞면 생성');
 
+  // 1) 입력 데이터
   const data = Object.fromEntries(new FormData(e.target));
-  console.log('1) 입력 데이터:', data);
+  console.log('1) 입력값:', data);
 
-  // 템플릿 로드
-  const tplBytes = await fetch('/templates/kbfintech_template_front.pdf').then(r => r.arrayBuffer());
-  const pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
+  // 2) 템플릿 로드
+  let tplBytes;
+  try {
+    const res = await fetch('/templates/kbfintech_template_front.pdf');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tplBytes = await res.arrayBuffer();
+    console.log('2) 템플릿 불러옴:', tplBytes.byteLength, 'bytes');
+  } catch (err) {
+    console.error('❌ 템플릿 로드 실패:', err);
+    return;
+  }
+
+  // 3) PDFDocument 생성
+  let pdfDoc;
+  try {
+    pdfDoc = await PDFLib.PDFDocument.load(tplBytes);
+    console.log('3) PDFDocument 로드 성공');
+  } catch (err) {
+    console.error('❌ PDFDocument 생성 실패:', err);
+    return;
+  }
   const [page] = pdfDoc.getPages();
-  const pageHeight = page.getHeight();
 
-  // 폰트 로드 (Pretendard OTF 사용)
-  const fontBuffer = await fetch('/fonts/Pretendard-Regular.otf').then(r => r.arrayBuffer());
+  // 4) 폰트 로드
+  console.log('4) opentype.js 폰트 로드');
+  const fontBuffer = await fetch('/fonts/KBFGDisplayM.otf').then(r => r.arrayBuffer());
   const font = opentype.parse(fontBuffer);
-  console.log('2) 폰트 로드 완료 - unitsPerEm:', font.unitsPerEm);
+  console.log('→ unitsPerEm:', font.unitsPerEm);
 
-  // 컬러 및 레이아웃 설정
+  // 5) 텍스트 설정
   const mm2pt = mm => mm * 2.8346;
-  const COLOR = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
+  const COLOR = PDFLib.cmyk(0, 0.1, 0.2, 0.65); // 404C
   const layout = {
     kor_name:  { x:19.034, y:21.843, size:13, em:0.3 },
     kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0 },
@@ -27,47 +46,48 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
     email:     { x:19.034, y:44.000, size: 8, em:0.0 },
   };
 
-  const drawTextPath = (key, text) => {
-    console.group(`▶ drawTextPath: ${key}`);
-    if (!text) return console.warn('스킵 (빈 텍스트)');
+  const drawText = (key, text) => {
+    console.group(`🔤 ${key}: "${text}"`);
+    if (!text) return console.warn('스킵됨');
+
     const cfg = layout[key];
     const glyphs = font.stringToGlyphs(text);
-    if (!glyphs.length) return console.warn('스킵 (glyph 없음)');
-
     let x = mm2pt(cfg.x);
-    const y = pageHeight - mm2pt(cfg.y);
+    const y = page.getHeight() - mm2pt(cfg.y);
     let pathData = '';
 
-    for (const g of glyphs) {
-      const p = g.getPath(x, y, cfg.size);
-      pathData += p.toPathData(2);
+    glyphs.forEach((g, i) => {
+      const path = g.getPath(x, y, cfg.size);
+      const d = path.toPathData(2);
+      pathData += d;
       x += g.advanceWidth * (cfg.size / font.unitsPerEm) + cfg.em * cfg.size;
-    }
+    });
 
-    if (!pathData) return console.warn('스킵 (pathData 없음)');
+    if (!pathData) return console.error('❌ pathData 없음');
+
     page.drawSvgPath(pathData, {
       fillColor: COLOR,
-      borderColor: PDFLib.rgb(1, 0, 0), // 디버깅용 외곽선
-      borderWidth: 0.3,
+      borderColor: COLOR,
+      borderWidth: 0.2,
     });
-    console.log(`✓ ${key} 출력 완료`);
     console.groupEnd();
   };
 
-  // 실제 텍스트 출력
-  drawTextPath('kor_name', data.kor_name);
-  drawTextPath('kor_dept', data.kor_dept);
-  drawTextPath('kor_title', data.kor_title);
-  drawTextPath('phone', data.phone);
-  drawTextPath('email', `${data.email_id}@alda.ai`);
+  // 6) 텍스트 그리기
+  drawText('kor_name',  data.kor_name);
+  drawText('kor_dept',  data.kor_dept);
+  drawText('kor_title', data.kor_title);
+  drawText('phone',     data.phone);
+  drawText('email',     `${data.email_id}@alda.ai`);
 
-  // PDF 저장 및 다운로드
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  // 7) 저장 및 다운로드
+  const bytes = await pdfDoc.save();
+  const blob = new Blob([bytes], { type: 'application/pdf' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'namecard_front.pdf';
   a.click();
+  console.log('📦 다운로드 완료');
 
   console.groupEnd();
 });
