@@ -136,3 +136,47 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
 
   console.groupEnd();
 });
+
+// 🔽 기존 스크립트 아래에 추가로 붙여주세요
+console.group('🧪 테스트: 단일 글자 path 출력');
+
+(async () => {
+  try {
+    const res = await fetch('/fonts/Pretendard-Regular.otf');
+    if (!res.ok) throw new Error(`폰트 로드 실패: HTTP ${res.status}`);
+    const fontBuffer = await res.arrayBuffer();
+    const font = opentype.parse(fontBuffer);
+    console.log('✔ Pretendard 폰트 로드 완료');
+
+    const glyph = font.charToGlyph('A');
+    console.log('✔ Glyph 추출 완료:', glyph);
+
+    const path = glyph.getPath(100, 500, 72);
+    console.log('✔ Path 생성 완료');
+    console.log('Path commands:', path.commands);
+    console.log('Path data:', path.toPathData(2));
+
+    // PDF 템플릿 없이 새로운 PDF로 테스트
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4 크기
+    const pathData = path.toPathData(2);
+
+    page.drawSvgPath(pathData, {
+      fillColor: PDFLib.rgb(0, 0, 0),
+      borderColor: PDFLib.rgb(1, 0, 0),
+      borderWidth: 0.3,
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'glyph_test.pdf';
+    a.click();
+    console.log('✔ PDF 다운로드 완료');
+  } catch (err) {
+    console.error('❌ 테스트 실패:', err);
+  }
+})();
+
+console.groupEnd();
