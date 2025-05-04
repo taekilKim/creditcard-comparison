@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/opentype.js@1.3.4/dist/opentype.js"></script>
     <!-- 스크립트 본체 -->
     <script defer src="./script.js"></script>
+ 
 </head>
 <body>
   <h2>명함 정보 입력</h2>
@@ -26,3 +27,28 @@
   </form>
 </body>
 </html>
+ <!-- HTML에 아래 스크립트 추가 -->
+  <script type="module">
+    import opentype from 'https://unpkg.com/opentype.js@1.3.4/dist/opentype.module.js';
+  
+    async function testFont() {
+      const fontBuffer = await fetch('/fonts/KBFGDisplayM.otf').then(r => r.arrayBuffer());
+      const font = opentype.parse(fontBuffer);
+      console.log('✅ 폰트 로드 성공:', font.familyName);
+  
+      const glyph = font.charToGlyph('a');
+      const path = glyph.getPath(0, 100, 72); // x=0, y=100, size=72pt
+  
+      console.log('🔤 Glyph advanceWidth:', glyph.advanceWidth);
+      console.log('🔤 Path commands:', path.commands.length);
+      console.log('🔤 SVG pathData:', path.toPathData());
+  
+      // SVG로 그려보기 (개발자도구 Elements에서 확인 가능)
+      const svg = `<svg width="300" height="150" viewBox="0 0 300 150">
+        <path d="${path.toPathData()}" fill="black" stroke="red" stroke-width="1" />
+      </svg>`;
+      document.body.insertAdjacentHTML('beforeend', svg);
+    }
+  
+    testFont();
+  </script>
