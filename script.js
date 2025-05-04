@@ -44,25 +44,21 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
     console.log(`    → unitsPerEm:`, f.unitsPerEm);
     return f;
   };
-  const fonts = {
-    Display: await loadFont('Display', '/fonts/KBFGDisplayM.otf'),
-    TextB:    await loadFont('TextB',    '/fonts/KBFGTextB.otf'),
-    TextL:    await loadFont('TextL',    '/fonts/KBFGTextL.otf'),
-  };
-  console.log('4) 폰트 로드 완료');
+  const font = await loadFont('Pretendard', '/fonts/Pretendard-Regular.otf');
+  console.log('4) Pretendard 폰트 로드 완료');
 
   // 5) 레이아웃 정의
   console.log('5) 레이아웃 정의');
   const mm2pt = mm => mm * 2.8346;
   const COLOR_404C = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
   const layout = {
-    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_404C },
-    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.Display, color:COLOR_404C },
-    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_404C },
-    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_404C },
-    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:fonts.TextL,    color:COLOR_404C },
-    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:fonts.Display, color:COLOR_404C },
-    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:fonts.TextB,    color:COLOR_404C },
+    kor_name:  { x:19.034, y:21.843, size:13, em:0.3, font:font, color:COLOR_404C },
+    kor_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:font, color:COLOR_404C },
+    kor_title: { x:19.034, y:36.047, size: 9, em:0.0, font:font, color:COLOR_404C },
+    phone:     { x:19.034, y:40.000, size: 8, em:0.0, font:font, color:COLOR_404C },
+    email:     { x:19.034, y:44.000, size: 8, em:0.0, font:font, color:COLOR_404C },
+    eng_name:  { x:19.034, y:21.843, size:13, em:0.3, font:font, color:COLOR_404C },
+    eng_dept:  { x:19.034, y:31.747, size: 9, em:0.0, font:font, color:COLOR_404C },
   };
   console.table(layout);
 
@@ -102,7 +98,7 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
 
     page.drawSvgPath(pathData, {
       fillColor: cfg.color,
-      borderColor: PDFLib.rgb(1, 0, 0), // 빨간 외곽선
+      borderColor: PDFLib.rgb(1, 0, 0), // 외곽선 디버깅용
       borderWidth: 0.3,
     });
     console.log(`✓ drawSvgPath 성공 (${key})`);
