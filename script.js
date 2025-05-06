@@ -1,69 +1,43 @@
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  console.group("🖨️ 벡터 PDF 테스트");
+  const text = document.getElementById('kor_name').value;
+  const fontUrl = '/fonts/KBFGTextL.otf';
 
-  const data = Object.fromEntries(new FormData(e.target));
-  console.log("1) 입력 데이터:", data);
+  // mm to pt 변환 함수
+  const mm2pt = mm => mm * 2.83465;
 
-  // 2) 폰트 로드
-  const fontUrl = "/fonts/KBFGTextL.otf";
+  // 좌표 입력 (바운딩박스 좌상단 기준)
+  const x_mm = 19.034;
+  const y_mm = 22.025;
+
+  // PDF 크기: 92 x 52 mm
+  const pdfWidth = mm2pt(92);   // 260.55pt
+  const pdfHeight = mm2pt(52);  // 147.38pt
+
+  const fontSize = 13; // pt
+
   const resFont = await fetch(fontUrl);
   const fontBuffer = await resFont.arrayBuffer();
   const font = opentype.parse(fontBuffer);
 
-  const fontName = font?.names?.fullName?.en;
-  console.log("2) 폰트 로드:", fontName ?? "❌ undefined");
-  console.log(" - unitsPerEm:", font.unitsPerEm);
+  const glyph = font.charToGlyph(text);
+  const path = glyph.getPath(mm2pt(x_mm), pdfHeight - mm2pt(y_mm), fontSize);
+  const pathData = path.toPathData(2);
 
-  // 3) PDF 생성
   const pdfDoc = await PDFLib.PDFDocument.create();
-  const page = pdfDoc.addPage([300, 150]);
-  const height = page.getHeight();
+  const page = pdfDoc.addPage([pdfWidth, pdfHeight]);
 
-  const drawTextPath = (text, xPt, yPt, size) => {
-    const glyphs = font.stringToGlyphs(text);
-    if (!glyphs.length) {
-      console.warn("⚠️ 그릴 텍스트 없음:", text);
-      return;
-    }
+  page.drawSvgPath(pathData, {
+    borderWidth: 0.3,
+    borderColor: PDFLib.rgb(1, 0, 0),
+    fillColor: PDFLib.rgb(0, 0, 0),  // 검정색 필 적용
+  });
 
-    let cursorX = xPt;
-    let pathData = "";
-    for (let i = 0; i < glyphs.length; i++) {
-      const g = glyphs[i];
-      const path = g.getPath(cursorX, yPt, size);
-      pathData += path.toPathData(2);
-      cursorX += g.advanceWidth * (size / font.unitsPerEm);
-    }
-
-    if (!pathData) {
-      console.warn("⚠️ pathData 없음:", text);
-      return;
-    }
-
-    page.drawSvgPath(pathData, {
-      fillColor: PDFLib.rgb(0, 0, 0),
-      borderWidth: 0.3,
-      borderColor: PDFLib.rgb(1, 0, 0),
-    });
-
-    console.log(`✅ drawSvgPath 완료: "${text}" at (${xPt}, ${yPt})`);
-  };
-
-  // 4) 테스트 텍스트 배치 (앞면용)
-  drawTextPath(data.kor_name, 20, height - 30, 12);
-  drawTextPath(data.kor_dept, 20, height - 50, 9);
-  drawTextPath(data.kor_title, 20, height - 65, 9);
-  drawTextPath(data.phone, 20, height - 85, 8);
-  drawTextPath(`${data.email_id}@alda.ai`, 20, height - 100, 8);
-
-  // 5) 저장 & 다운로드
-  const bytes = await pdfDoc.save();
-  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const pdfBytes = await pdfDoc.save();
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'namecard_front_test.pdf';
+  a.href = url;
+  a.download = 'namecard_kor_name_test.pdf';
   a.click();
-
-  console.groupEnd();
 });
