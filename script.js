@@ -5,7 +5,7 @@ document.getElementById('infoForm').addEventListener('submit', async (e) => {
   const formData = new FormData(e.target);
   const kor_name = formData.get('kor_name') || '김태길';
 
-  const fontUrl = "/fonts/KBFGTextL.otf";
+  const fontUrl = "/fonts/KBFGDisplayM.otf";
   const fontBuffer = await fetch(fontUrl).then(res => res.arrayBuffer());
   const font = opentype.parse(fontBuffer);
 
