@@ -1,47 +1,81 @@
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  console.group('🖨️ 명함 생성 워크플로우');
 
-  const mmToPt = (mm) => mm * 2.83465; // 1mm = 2.83465pt
-  const formData = new FormData(e.target);
-  const kor_name = formData.get('kor_name') || '김태길';
+  // 1) 오토필 데이터
+  const data = {
+    kor_name: "홍길동"
+  };
+  console.log("입력 데이터:", data);
 
-  const fontUrl = "/fonts/KBFGDisplayM.otf";
-  const fontBuffer = await fetch(fontUrl).then(res => res.arrayBuffer());
+  // 2) PDF 문서 생성
+  const pdfDoc = await PDFLib.PDFDocument.create();
+  const pageWidth = 92 * 2.8346;
+  const pageHeight = 52 * 2.8346;
+  const page = pdfDoc.addPage([pageWidth, pageHeight]);
+
+  // 3) 폰트 로드
+  const fontBuffer = await fetch("/fonts/KBFGDisplayM.otf").then(res => res.arrayBuffer());
   const font = opentype.parse(fontBuffer);
+  console.log("폰트:", font.names?.fullName?.en || "❌ undefined");
 
-  const fontSize = 13 * 1.333; // pt to px (optional), PDF-lib interprets in pt
-  const unitsPerEm = font.unitsPerEm;
-  const spacing = 0.3 * unitsPerEm; // letter-spacing in em
-  const nameX = mmToPt(19.034);
-  const nameY = mmToPt(52 - 22.025); // PDF-lib Y=0 is bottom-left
+  // 4) 위치와 스타일 정의
+  const mm2pt = mm => mm * 2.8346;
+  const layout = {
+    kor_name: {
+      x: mm2pt(19.034),
+      y: pageHeight - mm2pt(22.025), // Illustrator는 좌상단 기준
+      size: 13,
+      letterSpacing: 0.3,
+      font,
+      color: PDFLib.cmyk(0, 0.10, 0.20, 0.65)
+    }
+  };
 
-  const glyphs = font.stringToGlyphs(kor_name);
-  const path = new opentype.Path();
-  let offsetX = 0;
+  // 5) drawTextPath 함수
+  function drawTextPath(page, cfg, text, key) {
+    console.group(`📍 drawTextPath: ${key}`);
+    const glyphs = cfg.font.stringToGlyphs(text);
+    if (!glyphs.length) {
+      console.warn("  ➤ glyph 없음, 스킵");
+      console.groupEnd();
+      return;
+    }
 
-  for (const glyph of glyphs) {
-    const gPath = glyph.getPath(offsetX, 0, fontSize);
-    gPath.commands.forEach(cmd => path.commands.push(cmd));
-    offsetX += (glyph.advanceWidth + spacing) * (fontSize / unitsPerEm);
+    let cursorX = cfg.x;
+    const y = cfg.y;
+    let pathData = '';
+
+    glyphs.forEach((g, i) => {
+      const p = g.getPath(cursorX, y, cfg.size);
+      pathData += p.toPathData(2);
+      cursorX += g.advanceWidth * (cfg.size / cfg.font.unitsPerEm) + cfg.letterSpacing * cfg.size;
+    });
+
+    if (!pathData) {
+      console.warn("  ➤ pathData 없음");
+      console.groupEnd();
+      return;
+    }
+
+    page.drawSvgPath(pathData, {
+      fillColor: cfg.color,
+      borderWidth: 0 // 스트로크 제거
+    });
+
+    console.log("✔ drawSvgPath 완료");
+    console.groupEnd();
   }
 
-  const pdfDoc = await PDFLib.PDFDocument.create();
-  const page = pdfDoc.addPage([mmToPt(92), mmToPt(52)]);
-  const pathData = path.toPathData(2);
+  // 6) 이름 그리기
+  drawTextPath(page, layout.kor_name, data.kor_name, 'kor_name');
 
-  page.drawSvgPath(pathData, {
-    x: nameX,
-    y: nameY,
-    borderColor: PDFLib.rgb(1, 0, 0),
-    borderWidth: 0.5,
-    color: PDFLib.rgb(0, 0, 0), // fill
-  });
-
+  // 7) 저장 & 다운로드
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
+  const blob = new Blob([pdfBytes], { type: "application/pdf" });
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "kor_name_test_positioned.pdf";
+  a.href = URL.createObjectURL(blob);
+  a.download = "namecard_front_test.pdf";
   a.click();
+  console.groupEnd();
 });
