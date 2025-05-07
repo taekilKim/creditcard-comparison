@@ -1,64 +1,58 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Autofill for development
-  document.querySelector('input[name="kor_name"]').value = "김태길";
-  document.querySelector('input[name="kor_dept"]').value = "신용대출스쿼드";
-  document.querySelector('input[name="kor_title"]').value = "팀장";
-  document.querySelector('input[name="phone"]').value = "01092141980";
-  document.querySelector('input[name="email_id"]').value = "taekil.design@gmail.com";
-  document.querySelector('input[name="eng_name"]').value = "taekil kim";
-  document.querySelector('input[name="eng_dept"]').value = "Credit Squad";
-  document.querySelector('input[name="eng_title"]').value = "Product Designer";
-});
+// script.js
 
-document.getElementById("infoForm").addEventListener("submit", async (e) => {
+document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  console.group('🖨️ 명함 생성 워크플로우 시작');
 
-  const korName = document.querySelector('input[name="kor_name"]').value;
-  console.group("PDF 이름 텍스트 시작");
-  console.log("이름 데이터:", korName);
+  const data = Object.fromEntries(new FormData(e.target));
+  console.log('1) 폼 데이터:', data);
 
-  const fontUrl = "/fonts/KBFGTextL.otf"; // 정확한 경로
-  const fontBuffer = await fetch(fontUrl).then(res => res.arrayBuffer());
-  const font = opentype.parse(fontBuffer);
-
-  console.log("폰트 OTF:", font.names.fullName?.en || "❌");
-  console.log("unitsPerEm:", font.unitsPerEm);
-
-  const fontSize = 13.5; // pt 기준
-  const letterSpacingEm = 0.3;
-  const pageWidth = 92 * 2.83465; // mm to pt
-  const pageHeight = 52 * 2.83465;
-
-  const startXmm = 19.034;
-  const startYmm = 22.025;
-  let x = startXmm * 2.83465;
-  const y = pageHeight - (startYmm * 2.83465); // Illustrator 좌상단 기준
-
+  // 템플릿 없이 빈 페이지 생성
   const pdfDoc = await PDFLib.PDFDocument.create();
-  const page = pdfDoc.addPage([pageWidth, pageHeight]);
+  const page = pdfDoc.addPage([PDFLib.mm2pt(92), PDFLib.mm2pt(52)]); // 92x52mm 대지
+  const pageHeight = page.getHeight();
 
-  // fill color: CMYK C0 M10 Y20 K65 → RGB 변환 (대략 #5a5753)
-  const fillColor = PDFLib.rgb(0.353, 0.341, 0.325);
+  // 폰트 로드
+  const fontBuffer = await fetch("/fonts/KBFGDisplayM.otf").then(res => res.arrayBuffer());
+  const font = opentype.parse(fontBuffer);
+  console.log("폰트 로드:", font.names.fullName?.en || "❌ undefined");
 
-  for (let i = 0; i < korName.length; i++) {
-    const glyph = font.charToGlyph(korName[i]);
-    const glyphPath = glyph.getPath(x, y, fontSize);
-    const svgPath = glyphPath.toPathData(2);
-    page.drawSvgPath(svgPath, {
-      fillColor,
-      borderWidth: 0, // no stroke
-    });
+  // 컬러 정의
+  const fillColor = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
 
-    const advance = glyph.advanceWidth * (fontSize / font.unitsPerEm);
-    x += advance + (letterSpacingEm * fontSize); // tracking 적용
+  // 위치 계산: 아트보드 Y가 -52mm인 상황을 보정
+  const mm2pt = mm => mm * 2.8346;
+  const baseY = 52; // 보정값
+  const korNameLayout = {
+    x: mm2pt(19.034),
+    y: mm2pt(baseY - 22.025), // 보정 적용
+    size: 13,
+    spacingEm: 0.3
+  };
+
+  // 텍스트를 path로 렌더링
+  const glyphs = font.stringToGlyphs(data.kor_name || "홍길동");
+  let cursorX = korNameLayout.x;
+  const pathCommands = [];
+
+  for (let g of glyphs) {
+    const path = g.getPath(cursorX, korNameLayout.y, korNameLayout.size);
+    pathCommands.push(path.toPathData(2));
+    cursorX += g.advanceWidth * (korNameLayout.size / font.unitsPerEm) + korNameLayout.spacingEm * korNameLayout.size;
   }
 
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const fullPath = pathCommands.join('');
+  page.drawSvgPath(fullPath, {
+    fillColor,
+    borderWidth: 0
+  });
+
+  const bytes = await pdfDoc.save();
+  const blob = new Blob([bytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "kor_name_test_positioned.pdf";
+  a.download = "namecard_test_front.pdf";
   a.click();
 
   console.groupEnd();
