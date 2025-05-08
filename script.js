@@ -1,49 +1,57 @@
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
+  console.clear();
+  console.group("🖨️ 이름 PDF 생성");
 
   const data = Object.fromEntries(new FormData(e.target));
-  console.group('🖨️ 명함 이름 테스트 시작');
-  console.log('1) 입력 데이터:', data);
+  console.log("1) 입력 데이터:", data);
 
-  const fontUrl = '/fonts/KBFGDisplayM.otf';
-  const fontBytes = await fetch(fontUrl).then(r => r.arrayBuffer());
-  const font = opentype.parse(fontBytes);
-  console.log('2) 폰트 이름:', font.names.fullName.en);
-  console.log('   unitsPerEm:', font.unitsPerEm);
+  const mm2pt = mm => mm * 2.8346;
+  const pageWidth = mm2pt(92);
+  const pageHeight = mm2pt(52);
+  const safeOffsetY = mm2pt(52);  // opentype.js 좌표계는 좌상단 0, PDF-lib은 좌하단 0
 
   const pdfDoc = await PDFLib.PDFDocument.create();
-  const page = pdfDoc.addPage([92 * 2.8346, 52 * 2.8346]); // 92mm x 52mm in pt
-  console.log('3) PDF 페이지 크기:', page.getWidth(), 'x', page.getHeight());
+  const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-  const text = data.kor_name;
+  // 폰트 로드
+  const fontBuffer = await fetch('/fonts/KBFGDisplayM.otf').then(res => res.arrayBuffer());
+  const font = opentype.parse(fontBuffer);
+  console.log("2) 폰트 이름:", font.names.fullName?.en, "unitsPerEm:", font.unitsPerEm);
+
+  // 스타일 정의
   const fontSize = 13;
-  const letterSpacingEm = 0.3;
-  const xPt = 53.95; // 19.034mm
-  const yPt = 77.14; // 27.212mm (좌하단 기준)
+  const letterSpacing = 0.3;
+  const color = PDFLib.cmyk(0, 0.1, 0.2, 0.65); // Pantone 404C
 
-  const glyphs = font.stringToGlyphs(text);
-  const color = PDFLib.cmyk(0, 0.10, 0.20, 0.65);
-  let cursorX = xPt;
-  const y = yPt;
+  // 좌하단 기준 위치
+  const baseX = mm2pt(19.034);
+  const baseY = mm2pt(27.212);
+
+  // 텍스트 렌더링
+  const glyphs = font.stringToGlyphs(data.kor_name || "홍길동");
+  let cursorX = baseX;
+  const y = baseY;
 
   let pathData = '';
   glyphs.forEach((g, i) => {
-    const p = g.getPath(cursorX, y, fontSize);
+    const p = g.getPath(cursorX, safeOffsetY - y, fontSize); // 보정
     pathData += p.toPathData(2);
-    cursorX += g.advanceWidth * (fontSize / font.unitsPerEm) + letterSpacingEm * fontSize;
+    cursorX += g.advanceWidth * (fontSize / font.unitsPerEm) + fontSize * letterSpacing;
   });
 
   page.drawSvgPath(pathData, {
     fillColor: color,
-    borderWidth: 0, // 스트로크 제거
+    borderWidth: 0, // stroke 제거
   });
 
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = document.createElement("a");
   a.href = url;
-  a.download = 'kor_name_test_positioned.pdf';
+  a.download = "kor_name_positioned.pdf";
   a.click();
+
   console.groupEnd();
 });
