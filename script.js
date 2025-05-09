@@ -1,55 +1,59 @@
 document.getElementById('infoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const data = Object.fromEntries(new FormData(e.target));
-  console.log('1) 폼 데이터:', data);
+  const text = '김태길';
+  const fontUrl = '/fonts/KBFGDisplayM.otf';
 
-  const { PDFDocument, rgb } = PDFLib;
+  console.group('🖨️ 국문 이름 테스트 시작');
+  console.log('이름 데이터:', text);
 
-  // mm to pt
+  const pdfDoc = await PDFLib.PDFDocument.create();
   const mm2pt = mm => mm * 2.8346;
+  const pageWidth = mm2pt(92);
+  const pageHeight = mm2pt(52);
+  const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-  // 1. Create PDF
-  const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]); // 아트보드 사이즈
-
-  // 2. Load font
-  const fontUrl = '/fonts/KBFGDisplayM.otf'; // 실제 경로 확인 필요
-  const fontBuffer = await fetch(fontUrl).then(res => res.arrayBuffer());
+  const fontBuffer = await fetch(fontUrl).then(r => r.arrayBuffer());
   const font = opentype.parse(fontBuffer);
 
-  // 3. Draw text
-  const text = data.kor_name || '김태길';
-  const fontSize = 13;
-  const letterSpacing = 0.3; // em
-  const baselineOffset = 0; // 추가 조정 필요시 사용
-  const x = mm2pt(19.034);
-  const y = mm2pt(27.212);
+  console.log('폰트 이름:', font.names.fullName?.en || 'Unknown');
+  console.log('unitsPerEm:', font.unitsPerEm);
 
-  let cursorX = x;
+  const layout = {
+    x: mm2pt(19.034),
+    y: mm2pt(27.212),
+    fontSize: 13,
+    letterSpacing: 0.3,
+    color: PDFLib.cmyk(0, 0.10, 0.20, 0.65)
+  };
+
   const glyphs = font.stringToGlyphs(text);
-  const yPos = y;
+  let cursorX = layout.x;
+  let pathData = '';
 
-  let fullPath = '';
-  for (const glyph of glyphs) {
-    const path = glyph.getPath(cursorX, yPos, fontSize);
-    fullPath += path.toPathData(2);
-    cursorX += glyph.advanceWidth * (fontSize / font.unitsPerEm) + letterSpacing * fontSize;
-  }
-
-  // 4. Fill only (no stroke)
-  page.drawSvgPath(fullPath, {
-    fillColor: PDFLib.cmyk(0, 0.10, 0.20, 0.65),
-    borderColor: undefined,
-    borderWidth: 0
+  glyphs.forEach((glyph) => {
+    const path = glyph.getPath(cursorX, layout.y, layout.fontSize);
+    pathData += path.toPathData(2);
+    cursorX += glyph.advanceWidth * (layout.fontSize / font.unitsPerEm) + layout.letterSpacing * layout.fontSize;
   });
 
-  // 5. Save + Download
+  if (pathData) {
+    page.drawSvgPath(pathData, {
+      fillColor: layout.color,
+      borderColor: undefined,
+      borderWidth: 0
+    });
+    console.log('✓ drawSvgPath 성공');
+  } else {
+    console.warn('⚠️ pathData 비어 있음');
+  }
+
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = 'kor_name_test.pdf';
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kor_name_positioned.pdf';
   a.click();
+
+  console.groupEnd();
 });
