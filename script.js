@@ -1,49 +1,43 @@
-document.getElementById('infoForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  console.group('🖨️ 국문 이름 테스트 시작');
+import { PDFDocument, rgb } from 'pdf-lib';
+import opentype from 'opentype.js';
+import fs from 'fs';
 
-  // 1. 기본 값 설정
-  const name = '김태길';  // 테스트 고정값
-  const fontUrl = '/fonts/KBFGDisplayM.otf';  // 정확한 파일명 확인 필요
-  const mm2pt = mm => mm * 2.8346;
+// mm → pt 변환 함수
+const mm2pt = (mm) => mm * 2.83465;
+
+// 국문 이름 위치 정보
+const nameX_mm = 19.057;
+const nameBaselineY_mm = -26.101;
+
+const drawKoreanName = async (pdfDoc, page) => {
+  const fontBuffer = fs.readFileSync('KBFGDisplayM.otf');
+  const font = opentype.parse(fontBuffer.buffer);
+
+  const name = '김태길';
   const fontSize = 13;
-  const letterSpacing = 0.3; // em 단위
+  const letterSpacing = 0.3 * font.unitsPerEm; // 300/1000em
 
-  // 2. PDF 및 폰트 로드
-  const pdfDoc = await PDFLib.PDFDocument.create();
-  const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]); // 명함 사이즈
-
-  const fontBuffer = await fetch(fontUrl).then(r => r.arrayBuffer());
-  const font = opentype.parse(fontBuffer);
-
-  // 3. 좌표 계산
-  const x = mm2pt(19.034);
-  const baseY = mm2pt(26.1); // 베이스라인 Y좌표 (절대값 양수로 변환)
-  const y = baseY;
-
-  // 4. 텍스트 패스 생성 및 적용
-  const glyphs = font.stringToGlyphs(name);
-  let cursorX = x;
-  let pathData = '';
-
-  for (const g of glyphs) {
-    const p = g.getPath(cursorX, y, fontSize);
-    pathData += p.toPathData(2);
-    cursorX += g.advanceWidth * (fontSize / font.unitsPerEm) + (letterSpacing * fontSize);
-  }
-
-  page.drawSvgPath(pathData, {
-    fillColor: PDFLib.cmyk(0, 0.10, 0.20, 0.65),
-    borderWidth: 0
+  // 폰트 path로 변환
+  let x = 0;
+  const paths = name.split('').map((char) => {
+    const glyph = font.charToGlyph(char);
+    const glyphPath = glyph.getPath(x, 0, fontSize);
+    x += glyph.advanceWidth + letterSpacing;
+    return glyphPath;
   });
 
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "kor_name_positioned.pdf";
-  a.click();
+  // 전체 path 합치기
+  const fullPath = new opentype.Path();
+  paths.forEach((p) => {
+    p.commands.forEach((cmd) => fullPath.commands.push(cmd));
+  });
 
-  console.groupEnd();
-});
+  // path → SVG → PDF-lib path
+  const svgPathData = fullPath.toPathData();
+  page.drawSvgPath(svgPathData, {
+    x: mm2pt(nameX_mm),
+    y: mm2pt(nameBaselineY_mm),
+    color: rgb(0, 0, 0),
+    borderWidth: 0,
+  });
+};
