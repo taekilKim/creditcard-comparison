@@ -1,43 +1,52 @@
-import { PDFDocument, rgb } from 'pdf-lib';
-import opentype from 'opentype.js';
-import fs from 'fs';
+function mm2pt(mm) {
+  return mm * 2.83465;
+}
 
-// mm → pt 변환 함수
-const mm2pt = (mm) => mm * 2.83465;
-
-// 국문 이름 위치 정보
-const nameX_mm = 19.057;
-const nameBaselineY_mm = -26.101;
-
-const drawKoreanName = async (pdfDoc, page) => {
-  const fontBuffer = fs.readFileSync('KBFGDisplayM.otf');
-  const font = opentype.parse(fontBuffer.buffer);
-
+async function generatePDFWithKoreanName() {
   const name = '김태길';
   const fontSize = 13;
-  const letterSpacing = 0.3 * font.unitsPerEm; // 300/1000em
+  const letterSpacingEm = 0.3; // 300/1000em
 
-  // 폰트 path로 변환
-  let x = 0;
-  const paths = name.split('').map((char) => {
-    const glyph = font.charToGlyph(char);
-    const glyphPath = glyph.getPath(x, 0, fontSize);
-    x += glyph.advanceWidth + letterSpacing;
-    return glyphPath;
-  });
+  const nameX = mm2pt(19.057);
+  const nameBaselineY = mm2pt(-26.101);
 
-  // 전체 path 합치기
-  const fullPath = new opentype.Path();
-  paths.forEach((p) => {
-    p.commands.forEach((cmd) => fullPath.commands.push(cmd));
-  });
+  const pdfDoc = await PDFLib.PDFDocument.create();
+  const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]);
 
-  // path → SVG → PDF-lib path
-  const svgPathData = fullPath.toPathData();
-  page.drawSvgPath(svgPathData, {
-    x: mm2pt(nameX_mm),
-    y: mm2pt(nameBaselineY_mm),
-    color: rgb(0, 0, 0),
-    borderWidth: 0,
+  opentype.load('./fonts/KBFGDisplayM.otf', function (err, font) {
+    if (err) {
+      console.error('폰트 로딩 오류:', err);
+      return;
+    }
+
+    const fontEm = font.unitsPerEm;
+    let currentX = 0;
+    const mergedPath = new opentype.Path();
+
+    for (let i = 0; i < name.length; i++) {
+      const glyph = font.charToGlyph(name[i]);
+      const glyphPath = glyph.getPath(currentX, 0, fontSize);
+      glyphPath.commands.forEach(cmd => mergedPath.commands.push(cmd));
+      currentX += glyph.advanceWidth + letterSpacingEm * fontEm;
+    }
+
+    const svgPathData = mergedPath.toPathData();
+
+    page.drawSvgPath(svgPathData, {
+      x: nameX,
+      y: nameBaselineY,
+      color: PDFLib.rgb(0, 0, 0),
+      borderWidth: 0
+    });
+
+    pdfDoc.save().then((pdfBytes) => {
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'namecard.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
   });
-};
+}
