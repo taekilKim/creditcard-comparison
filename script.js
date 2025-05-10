@@ -9,10 +9,9 @@ window.generatePDFWithKoreanName = function () {
   // 스타일 설정
   const fontSize = 13; // pt
   const letterSpacingEm = 0.3; // 300/1000 em
-  const illustratorY = -26.101; // 베이스라인 기준 Y좌표 (mm)
+  const illustratorY = -26.101;
   const artboardHeightMM = 52;
 
-  // PDF-lib 좌표계 보정
   const nameX = mm2pt(19.057);
   const nameBaselineY = mm2pt(artboardHeightMM + illustratorY);
 
@@ -30,11 +29,12 @@ window.generatePDFWithKoreanName = function () {
 
       console.log('✅ 폰트 로딩 성공:', font.names.fullName.en);
 
-      const fontEm = font.unitsPerEm; // 보통 1000
-      const letterSpacing = letterSpacingEm * fontEm;
-
       const mergedPath = new opentype.Path();
       let x = 0;
+      const letterSpacing = letterSpacingEm * fontSize; // ✅ pt 단위 자간 계산
+
+      console.log(`🎯 폰트 크기: ${fontSize}pt`);
+      console.log(`🎯 자간 (em): ${letterSpacingEm} → pt: ${letterSpacing.toFixed(2)}pt`);
 
       for (let i = 0; i < korName.length; i++) {
         const char = korName[i];
@@ -42,21 +42,21 @@ window.generatePDFWithKoreanName = function () {
         const glyphPath = glyph.getPath(x, 0, fontSize);
         glyphPath.commands.forEach(cmd => mergedPath.commands.push(cmd));
 
-        const adv = glyph.advanceWidth;
-        console.log(`🔠 '${char}' advanceWidth: ${adv}, spacing: ${letterSpacing}`);
+        const adv = glyph.advanceWidth / font.unitsPerEm * fontSize; // ✅ pt로 변환
+        console.log(`🔤 '${char}' → advWidth(em): ${glyph.advanceWidth}, adv(pt): ${adv.toFixed(2)}, total step: ${(adv + letterSpacing).toFixed(2)}`);
+
         x += adv + letterSpacing;
       }
 
       const svgPath = mergedPath.toPathData();
-
       page.drawSvgPath(svgPath, {
         x: nameX,
         y: nameBaselineY,
-        color: PDFLib.rgb(0.349, 0.314, 0.278), // CMYK 0/10/20/65 근사값
+        color: PDFLib.rgb(0.349, 0.314, 0.278),
         borderWidth: 0,
       });
 
-      console.log(`📍 출력 위치: X=${nameX.toFixed(2)}pt, Y=${nameBaselineY.toFixed(2)}pt`);
+      console.log(`📍 출력 좌표: X=${nameX.toFixed(2)}pt, Y=${nameBaselineY.toFixed(2)}pt`);
 
       pdfDoc.save().then((pdfBytes) => {
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
