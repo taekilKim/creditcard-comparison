@@ -9,18 +9,18 @@ window.generatePDFWithKoreanName = function () {
   // 스타일 설정
   const fontSize = 13;
   const letterSpacingEm = 0.3;
-  const illustratorY = -26.303; // ✅ 보정된 베이스라인 Y좌표
+  const illustratorY = -25.797; // ✅ 오차 보정 적용된 최종 베이스라인 위치
   const artboardHeightMM = 52;
 
   const nameX = mm2pt(19.057);
-  const nameBaselineY = mm2pt(artboardHeightMM + illustratorY); // = mm2pt(25.697mm)
+  const nameBaselineY = mm2pt(artboardHeightMM + illustratorY); // = mm2pt(26.203)
 
-  console.log('🟡 PDF 문서 생성 시작...');
-  console.log(`🎯 Illustrator Y 기준: ${illustratorY}mm → PDF-lib Y: ${nameBaselineY.toFixed(2)}pt`);
+  console.log('🟡 PDF 생성 시작');
+  console.log(`🎯 Illustrator Y: ${illustratorY}mm → PDF Y: ${nameBaselineY.toFixed(3)}pt`);
 
   PDFLib.PDFDocument.create().then((pdfDoc) => {
     const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]);
-    console.log('🟢 PDF 페이지 생성 완료');
+    console.log('🟢 페이지 생성 완료');
 
     opentype.load('./fonts/KBFGDisplayM.otf', function (err, font) {
       if (err) {
@@ -34,8 +34,7 @@ window.generatePDFWithKoreanName = function () {
       let x = 0;
       const letterSpacing = letterSpacingEm * fontSize;
 
-      console.log(`🔧 폰트 크기: ${fontSize}pt`);
-      console.log(`🔧 자간 (300/1000em): ${letterSpacing.toFixed(2)}pt`);
+      console.log(`🔧 폰트 크기: ${fontSize}pt, 자간: ${letterSpacing.toFixed(2)}pt`);
 
       for (let i = 0; i < korName.length; i++) {
         const char = korName[i];
@@ -52,7 +51,7 @@ window.generatePDFWithKoreanName = function () {
       page.drawSvgPath(svgPath, {
         x: nameX,
         y: nameBaselineY,
-        color: PDFLib.rgb(0.349, 0.314, 0.278), // CMYK 0/10/20/65 근사
+        color: PDFLib.rgb(0.349, 0.314, 0.278),
         borderWidth: 0,
       });
 
