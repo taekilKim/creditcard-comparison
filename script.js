@@ -9,14 +9,14 @@ window.generatePDFWithKoreanName = function () {
   // 스타일 설정
   const fontSize = 13;
   const letterSpacingEm = 0.3;
-  const illustratorY = -25.797; // ✅ 오차 보정 적용된 최종 베이스라인 위치
+  const illustratorY = -25.695; // ✅ 오차 보정된 최종 베이스라인 위치
   const artboardHeightMM = 52;
 
   const nameX = mm2pt(19.057);
-  const nameBaselineY = mm2pt(artboardHeightMM + illustratorY); // = mm2pt(26.203)
+  const nameBaselineY = mm2pt(artboardHeightMM + illustratorY);
 
   console.log('🟡 PDF 생성 시작');
-  console.log(`🎯 Illustrator Y: ${illustratorY}mm → PDF Y: ${nameBaselineY.toFixed(3)}pt`);
+  console.log(`🎯 Illustrator Y: ${illustratorY}mm → PDF-lib Y: ${nameBaselineY.toFixed(3)}pt`);
 
   PDFLib.PDFDocument.create().then((pdfDoc) => {
     const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]);
