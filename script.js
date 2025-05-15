@@ -10,13 +10,13 @@ window.generatePDFWithKoreanName = function () {
   const fontSize = 13;
   const letterSpacingEm = 0.3;
   const illustratorX = 19.057;
-  const illustratorY = 29.961; // ✅ 보정된 베이스라인 위치
+  const illustratorY = 31.891; // ✅ 하단 정렬 보정 반영
   const nameX = mm2pt(illustratorX);
   const nameBaselineY = mm2pt(illustratorY);
 
   console.log('🟡 PDF 생성 시작');
-  console.log(`🎯 좌표 X: ${illustratorX}mm → ${nameX.toFixed(3)}pt`);
-  console.log(`🎯 좌표 Y: ${illustratorY}mm → ${nameBaselineY.toFixed(3)}pt`);
+  console.log(`🎯 X: ${illustratorX}mm → ${nameX.toFixed(3)}pt`);
+  console.log(`🎯 Y: ${illustratorY}mm → ${nameBaselineY.toFixed(3)}pt`);
 
   PDFLib.PDFDocument.create().then((pdfDoc) => {
     const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]); // 명함 크기
