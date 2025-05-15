@@ -9,12 +9,12 @@ window.generatePDFWithKoreanName = function () {
   // 스타일 설정
   const fontSize = 13;
   const letterSpacingEm = 0.3;
-  const illustratorY = 27.066; // ✅ 하단 정렬 최종 보정값
+  const illustratorY = 28.031; // ✅ 글리프 하단 정렬 보정값
   const nameX = mm2pt(19.057);
   const nameBaselineY = mm2pt(illustratorY);
 
   console.log('🟡 PDF 생성 시작');
-  console.log(`🎯 베이스라인 Y: ${illustratorY}mm → PDF Y: ${nameBaselineY.toFixed(3)}pt`);
+  console.log(`🎯 Y좌표: ${illustratorY}mm → PDF Y: ${nameBaselineY.toFixed(3)}pt`);
 
   PDFLib.PDFDocument.create().then((pdfDoc) => {
     const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]);
