@@ -6,21 +6,20 @@ window.generatePDFWithKoreanName = function () {
   const form = document.getElementById('infoForm');
   const korName = form.elements['kor_name'].value.trim();
 
-  // ⭐️ 스타일 및 위치 설정
-  const fontSize = 13; // pt
-  const letterSpacingEm = 0.3; // em 단위 자간
-  const illustratorY = 28.031; // ✅ 베이스라인 Y (mm) - 반드시 텍스트 베이스라인 기준
-  const illustratorX = 19.057; // 텍스트 좌측 기준 X (mm)
-
+  // 스타일 및 위치 설정
+  const fontSize = 13;
+  const letterSpacingEm = 0.3;
+  const illustratorX = 19.057;
+  const illustratorY = 29.961; // ✅ 보정된 베이스라인 위치
   const nameX = mm2pt(illustratorX);
-  const nameBaselineY = mm2pt(illustratorY); // PDF-lib과 Illustrator 좌표계 동일하므로 그대로 사용
+  const nameBaselineY = mm2pt(illustratorY);
 
   console.log('🟡 PDF 생성 시작');
   console.log(`🎯 좌표 X: ${illustratorX}mm → ${nameX.toFixed(3)}pt`);
   console.log(`🎯 좌표 Y: ${illustratorY}mm → ${nameBaselineY.toFixed(3)}pt`);
 
   PDFLib.PDFDocument.create().then((pdfDoc) => {
-    const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]); // 명함 크기 92x52mm
+    const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]); // 명함 크기
     console.log('🟢 페이지 생성 완료');
 
     opentype.load('./fonts/KBFGDisplayM.otf', function (err, font) {
@@ -35,8 +34,7 @@ window.generatePDFWithKoreanName = function () {
       let x = 0;
       const letterSpacing = letterSpacingEm * fontSize;
 
-      console.log(`🔧 폰트 크기: ${fontSize}pt`);
-      console.log(`🔧 자간: ${letterSpacing.toFixed(2)}pt`);
+      console.log(`🔧 폰트 크기: ${fontSize}pt, 자간: ${letterSpacing.toFixed(2)}pt`);
 
       for (let i = 0; i < korName.length; i++) {
         const char = korName[i];
@@ -53,7 +51,7 @@ window.generatePDFWithKoreanName = function () {
       page.drawSvgPath(svgPath, {
         x: nameX,
         y: nameBaselineY,
-        color: PDFLib.rgb(0.349, 0.314, 0.278), // CMYK(0,10,20,65) 근사 색상
+        color: PDFLib.rgb(0.349, 0.314, 0.278),
         borderWidth: 0,
       });
 
