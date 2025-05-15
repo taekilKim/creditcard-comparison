@@ -5,23 +5,14 @@ function mm2pt(mm) {
 window.generatePDFWithKoreanName = function () {
   const form = document.getElementById('infoForm');
   const korName = form.elements['kor_name'].value.trim();
+  const korDeptOrTitle = form.elements['kor_dept'].value.trim() || form.elements['kor_title'].value.trim();
 
-  // 스타일 및 위치 설정
-  const fontSize = 13; // pt
-  const letterSpacingEm = 0.3; // 300/1000 em
-  const illustratorX = 19.057; // mm
-  const illustratorY = 25.899; // mm (🎯 베이스라인 기준 Y값)
-  const artboardHeight = 52;   // mm (명함 세로 길이)
-
-  const nameX = mm2pt(illustratorX);
-  const nameBaselineY = mm2pt(artboardHeight - illustratorY); // ✅ Y 좌표 반전
-
-  console.log('🟡 PDF 생성 시작');
-  console.log(`🎯 입력 Y: ${illustratorY}mm → PDF-lib Y: ${(artboardHeight - illustratorY).toFixed(3)}mm → ${nameBaselineY.toFixed(2)}pt`);
+  const artboardHeight = 52;
+  const pageWidth = mm2pt(92);
+  const pageHeight = mm2pt(artboardHeight);
 
   PDFLib.PDFDocument.create().then((pdfDoc) => {
-    const page = pdfDoc.addPage([mm2pt(92), mm2pt(52)]); // 명함 크기
-    console.log('🟢 PDF 페이지 생성 완료');
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
     opentype.load('./fonts/KBFGDisplayM.otf', function (err, font) {
       if (err) {
@@ -29,29 +20,53 @@ window.generatePDFWithKoreanName = function () {
         return;
       }
 
-      console.log('✅ 폰트 로딩 성공:', font.names.fullName.en);
+      // ▷ 국문 이름 출력
+      const nameFontSize = 13;
+      const nameLetterSpacing = nameFontSize * 0.3;
+      const nameX = mm2pt(19.057);
+      const nameY = mm2pt(artboardHeight - 25.899); // 베이스라인 기준 반전
 
-      const mergedPath = new opentype.Path();
-      let x = 0;
-      const letterSpacing = letterSpacingEm * fontSize;
-
-      for (let i = 0; i < korName.length; i++) {
-        const glyph = font.charToGlyph(korName[i]);
-        const glyphPath = glyph.getPath(x, 0, fontSize);
-        glyphPath.commands.forEach(cmd => mergedPath.commands.push(cmd));
-
-        const adv = glyph.advanceWidth / font.unitsPerEm * fontSize;
-        x += adv + letterSpacing;
+      const namePath = new opentype.Path();
+      let x1 = 0;
+      for (const char of korName) {
+        const glyph = font.charToGlyph(char);
+        const path = glyph.getPath(x1, 0, nameFontSize);
+        path.commands.forEach(cmd => namePath.commands.push(cmd));
+        const adv = glyph.advanceWidth / font.unitsPerEm * nameFontSize;
+        x1 += adv + nameLetterSpacing;
       }
-
-      const svgPath = mergedPath.toPathData();
-      page.drawSvgPath(svgPath, {
+      page.drawSvgPath(namePath.toPathData(), {
         x: nameX,
-        y: nameBaselineY,
-        color: PDFLib.rgb(0.349, 0.314, 0.278), // CMYK(0,10,20,65) 근사값
-        borderWidth: 0,
+        y: nameY,
+        color: PDFLib.rgb(0.349, 0.314, 0.278),
       });
 
+      // ▷ 국문 소속 또는 직함 출력 (단일행)
+      const subFontSize = 9;
+      const subX = mm2pt(19.057);
+      const nameDescenderMM = 0.455; // 이름 항목 디센더 길이
+      const nameFontSizeMM = 13 / 2.83465; // pt → mm
+      const descenderRatio = nameDescenderMM / nameFontSizeMM;
+      const subDescender = descenderRatio * (subFontSize / 2.83465); // 9pt 기준 mm
+      const subBaseline = 31.220 - subDescender;
+      const subY = mm2pt(artboardHeight - subBaseline);
+
+      const subPath = new opentype.Path();
+      let x2 = 0;
+      for (const char of korDeptOrTitle) {
+        const glyph = font.charToGlyph(char);
+        const path = glyph.getPath(x2, 0, subFontSize);
+        path.commands.forEach(cmd => subPath.commands.push(cmd));
+        const adv = glyph.advanceWidth / font.unitsPerEm * subFontSize;
+        x2 += adv;
+      }
+      page.drawSvgPath(subPath.toPathData(), {
+        x: subX,
+        y: subY,
+        color: PDFLib.rgb(0.349, 0.314, 0.278),
+      });
+
+      // ▷ PDF 저장
       pdfDoc.save().then((pdfBytes) => {
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
@@ -60,7 +75,6 @@ window.generatePDFWithKoreanName = function () {
         a.download = 'namecard.pdf';
         a.click();
         URL.revokeObjectURL(url);
-        console.log('✅ PDF 다운로드 완료');
       });
     });
   });
