@@ -9,7 +9,7 @@ window.generatePDFWithKoreanName = function () {
   // 스타일 설정
   const fontSize = 13;
   const letterSpacingEm = 0.3;
-  const illustratorY = 28.031; // ✅ 글리프 하단 정렬 보정값
+  const illustratorY = 28.031; // ✅ 26.101 + 1.930 보정 반영
   const nameX = mm2pt(19.057);
   const nameBaselineY = mm2pt(illustratorY);
 
