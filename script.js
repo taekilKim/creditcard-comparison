@@ -5,7 +5,8 @@ function mm2pt(mm) {
 window.generatePDFWithKoreanName = function () {
   const form = document.getElementById('infoForm');
   const korName = form.elements['kor_name'].value.trim();
-  const korDeptOrTitle = form.elements['kor_dept'].value.trim() || form.elements['kor_title'].value.trim();
+  const korDept = form.elements['kor_dept'].value.trim();
+  const korTitle = form.elements['kor_title'].value.trim();
 
   const artboardHeight = 52; // mm
   const pageWidth = mm2pt(92);
@@ -28,14 +29,13 @@ window.generatePDFWithKoreanName = function () {
       const nameY = mm2pt(artboardHeight - nameBaseline);
 
       const namePath = new opentype.Path();
-      let nameXCursor = 0;
-
+      let x1 = 0;
       for (const char of korName) {
         const glyph = font.charToGlyph(char);
-        const path = glyph.getPath(nameXCursor, 0, nameFontSize);
+        const path = glyph.getPath(x1, 0, nameFontSize);
         path.commands.forEach(cmd => namePath.commands.push(cmd));
         const adv = glyph.advanceWidth / font.unitsPerEm * nameFontSize;
-        nameXCursor += adv + nameLetterSpacing;
+        x1 += adv + nameLetterSpacing;
       }
 
       page.drawSvgPath(namePath.toPathData(), {
@@ -44,28 +44,38 @@ window.generatePDFWithKoreanName = function () {
         color: PDFLib.rgb(0.349, 0.314, 0.278),
       });
 
-      // ▷ 국문 소속 또는 직함
+      // ▷ 국문 소속 및 직함 (조합 출력)
       const subFontSize = 9;
       const subX = mm2pt(19.057);
-      const subBaseline = 30.839; // 🎯 보정된 베이스라인 위치
+      const subBaseline = 30.839; // 보정된 베이스라인
       const subY = mm2pt(artboardHeight - subBaseline);
 
-      const subPath = new opentype.Path();
-      let subXCursor = 0;
-
-      for (const char of korDeptOrTitle) {
-        const glyph = font.charToGlyph(char);
-        const path = glyph.getPath(subXCursor, 0, subFontSize);
-        path.commands.forEach(cmd => subPath.commands.push(cmd));
-        const adv = glyph.advanceWidth / font.unitsPerEm * subFontSize;
-        subXCursor += adv;
+      let korDeptOrTitle = '';
+      if (korDept && korTitle) {
+        korDeptOrTitle = `${korDept} | ${korTitle}`;
+      } else if (korDept) {
+        korDeptOrTitle = korDept;
+      } else if (korTitle) {
+        korDeptOrTitle = korTitle;
       }
 
-      page.drawSvgPath(subPath.toPathData(), {
-        x: subX,
-        y: subY,
-        color: PDFLib.rgb(0.349, 0.314, 0.278),
-      });
+      if (korDeptOrTitle) {
+        const subPath = new opentype.Path();
+        let x2 = 0;
+        for (const char of korDeptOrTitle) {
+          const glyph = font.charToGlyph(char);
+          const path = glyph.getPath(x2, 0, subFontSize);
+          path.commands.forEach(cmd => subPath.commands.push(cmd));
+          const adv = glyph.advanceWidth / font.unitsPerEm * subFontSize;
+          x2 += adv;
+        }
+
+        page.drawSvgPath(subPath.toPathData(), {
+          x: subX,
+          y: subY,
+          color: PDFLib.rgb(0.349, 0.314, 0.278),
+        });
+      }
 
       // ▷ PDF 저장
       pdfDoc.save().then((pdfBytes) => {
