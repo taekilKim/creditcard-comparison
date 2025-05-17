@@ -2,23 +2,45 @@ function mm2pt(mm) {
   return mm * 2.83465;
 }
 
-// ✅ SVG를 높이 기준으로 비율 유지하여 삽입
-async function embedLogoSvgByHeight(page, svgUrl, x_mm, y_mm, height_mm) {
+// ✅ SVG를 canvas에 렌더링 → PNG로 PDF에 삽입
+async function embedSvgAsImage(page, pdfDoc, svgUrl, x_mm, y_mm, height_mm) {
   const res = await fetch(svgUrl);
   const svgText = await res.text();
-  const svgImage = await page.doc.embedSvg(svgText);
 
-  const { width, height } = svgImage.size();
-  const scale = mm2pt(height_mm) / height;
+  const blob = new Blob([svgText], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
 
-  page.drawImage(svgImage, {
-    x: mm2pt(x_mm),
-    y: mm2pt(y_mm),
-    width: width * scale,
-    height: height * scale,
+  const img = new Image();
+  img.src = url;
+
+  await new Promise((resolve) => {
+    img.onload = () => resolve();
   });
 
-  console.log(`✅ SVG 임베딩 완료: ${svgUrl} @ (${x_mm}mm, ${y_mm}mm), height=${height_mm}mm`);
+  const aspect = img.width / img.height;
+  const heightPx = 500;
+  const widthPx = heightPx * aspect;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = widthPx;
+  canvas.height = heightPx;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, widthPx, heightPx);
+
+  const dataUrl = canvas.toDataURL('image/png');
+  const pngImage = await pdfDoc.embedPng(dataUrl);
+
+  const scale = mm2pt(height_mm) / pngImage.height;
+
+  page.drawImage(pngImage, {
+    x: mm2pt(x_mm),
+    y: mm2pt(y_mm),
+    width: pngImage.width * scale,
+    height: pngImage.height * scale,
+  });
+
+  console.log(`✅ SVG 이미지 삽입 완료: ${svgUrl} @ (${x_mm}, ${y_mm}), height=${height_mm}mm`);
 }
 
 window.generatePDFWithKoreanName = function () {
@@ -34,11 +56,8 @@ window.generatePDFWithKoreanName = function () {
   PDFLib.PDFDocument.create().then(async (pdfDoc) => {
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-    // 문서 객체 연결 (embedSvg를 위해 필요)
-    page.doc = pdfDoc;
-
-    // ✅ 좌상단 로고 삽입 (높이 7mm 기준)
-    await embedLogoSvgByHeight(page, './assets/front_left.svg', 7, 38, 7);
+    // ✅ 좌상단 로고 삽입 (높이 7mm, 좌하단 기준 Y: 38mm)
+    await embedSvgAsImage(page, pdfDoc, './assets/front_left.svg', 7, 38, 7);
 
     opentype.load('./fonts/KBFGDisplayM.otf', function (err, font) {
       if (err) {
