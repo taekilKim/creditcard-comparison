@@ -1,25 +1,44 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>명함 PDF 생성기</title>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://unpkg.com/opentype.js@latest/dist/opentype.min.js"></script>
-  <script defer src="./script.js"></script>
 </head>
 <body>
   <h2>명함 정보 입력</h2>
-  <form id="infoForm" onsubmit="event.preventDefault(); generatePDFWithKoreanName();">
-    <h3>명함 정보 입력</h3>
+  <form id="infoForm">
     <label>국문 이름: <input name="kor_name" value="김태길" /></label><br />
     <label>국문 소속: <input name="kor_dept" value="신용대출스쿼드" /></label><br />
     <label>국문 직함: <input name="kor_title" value="팀장" /></label><br />
-    <label>전화번호: <input name="phone" value="01092141980" /></label><br />
-    <label>이메일 ID: <input name="email_id" value="taekil.design@gmail.com" /></label><br />
-    <label>영문 이름: <input name="eng_name" value="taekil kim" /></label><br />
-    <label>영문 소속: <input name="eng_dept" value="Credit Squad" /></label><br />
-    <label>영문 직함: <input name="eng_title" value="Product Designer" /></label><br />
-    <button type="submit">PDF 다운로드</button>
+    <button type="button" id="generateBtn">PDF 다운로드</button>
   </form>
+
+  <script>
+    document.getElementById("generateBtn").addEventListener("click", () => {
+      const form = document.getElementById("infoForm");
+      const name = form.elements["kor_name"].value.trim();
+      const dept = form.elements["kor_dept"].value.trim();
+      const title = form.elements["kor_title"].value.trim();
+
+      fetch("https://kbalda-pdf-generator.onrender.com/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, dept, title })
+      })
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "namecard.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch(err => {
+        alert("PDF 생성 중 오류가 발생했습니다.");
+        console.error(err);
+      });
+    });
+  </script>
 </body>
 </html>
