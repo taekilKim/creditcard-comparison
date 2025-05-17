@@ -2,25 +2,23 @@ function mm2pt(mm) {
   return mm * 2.83465;
 }
 
-// ✅ 고정 로고 삽입 함수
-async function drawFixedLogo(page, svgUrl, x_mm, y_mm, width_mm) {
+// ✅ SVG를 높이 기준으로 비율 유지하여 삽입
+async function embedLogoSvgByHeight(page, svgUrl, x_mm, y_mm, height_mm) {
   const res = await fetch(svgUrl);
-  const svg = await res.text();
-  const match = svg.match(/<path[^>]*d="([^"]+)"[^>]*>/);
-  if (!match) {
-    console.error('❌ SVG path data를 찾을 수 없습니다.');
-    return;
-  }
+  const svgText = await res.text();
+  const svgImage = await page.doc.embedSvg(svgText);
 
-  const pathData = match[1];
-  page.drawSvgPath(pathData, {
+  const { width, height } = svgImage.size();
+  const scale = mm2pt(height_mm) / height;
+
+  page.drawImage(svgImage, {
     x: mm2pt(x_mm),
     y: mm2pt(y_mm),
-    width: mm2pt(width_mm),
-    color: PDFLib.rgb(0, 0, 0),
+    width: width * scale,
+    height: height * scale,
   });
 
-  console.log(`✅ 로고 삽입 완료: ${svgUrl} @ (${x_mm}mm, ${y_mm}mm), width=${width_mm}mm`);
+  console.log(`✅ SVG 임베딩 완료: ${svgUrl} @ (${x_mm}mm, ${y_mm}mm), height=${height_mm}mm`);
 }
 
 window.generatePDFWithKoreanName = function () {
@@ -36,8 +34,11 @@ window.generatePDFWithKoreanName = function () {
   PDFLib.PDFDocument.create().then(async (pdfDoc) => {
     const page = pdfDoc.addPage([pageWidth, pageHeight]);
 
-    // ✅ 로고 먼저 삽입
-    await drawFixedLogo(page, './assets/front_left.svg', 7, 14, 37.155);
+    // 문서 객체 연결 (embedSvg를 위해 필요)
+    page.doc = pdfDoc;
+
+    // ✅ 좌상단 로고 삽입 (높이 7mm 기준)
+    await embedLogoSvgByHeight(page, './assets/front_left.svg', 7, 38, 7);
 
     opentype.load('./fonts/KBFGDisplayM.otf', function (err, font) {
       if (err) {
