@@ -14,29 +14,37 @@
   </form>
 
   <script>
-    document.getElementById("generateBtn").addEventListener("click", () => {
-      const form = document.getElementById("infoForm");
-      const name = form.elements["kor_name"].value.trim();
-      const dept = form.elements["kor_dept"].value.trim();
-      const title = form.elements["kor_title"].value.trim();
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("generateBtn").addEventListener("click", () => {
+        const form = document.getElementById("infoForm");
+        const name = form.elements["kor_name"].value.trim();
+        const dept = form.elements["kor_dept"].value.trim();
+        const title = form.elements["kor_title"].value.trim();
 
-      fetch("https://kbalda-pdf-generator.onrender.com/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, dept, title })
-      })
-      .then(res => res.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "namecard.pdf";
-        a.click();
-        URL.revokeObjectURL(url);
-      })
-      .catch(err => {
-        alert("PDF 생성 중 오류가 발생했습니다.");
-        console.error(err);
+        console.log("📡 요청 보냄: ", { name, dept, title });
+
+        fetch("https://kbalda-pdf-generator.onrender.com/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, dept, title })
+        })
+          .then(res => {
+            if (!res.ok) throw new Error("서버 오류: " + res.status);
+            return res.blob();
+          })
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "namecard.pdf";
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log("✅ PDF 다운로드 완료");
+          })
+          .catch(err => {
+            alert("PDF 생성 중 오류가 발생했습니다.");
+            console.error("❌ 오류:", err);
+          });
       });
     });
   </script>
