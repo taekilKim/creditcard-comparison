@@ -10,42 +10,48 @@
     <label>국문 이름: <input name="kor_name" value="김태길" /></label><br />
     <label>국문 소속: <input name="kor_dept" value="신용대출스쿼드" /></label><br />
     <label>국문 직함: <input name="kor_title" value="팀장" /></label><br />
-    <button type="button" id="generateBtn">PDF 다운로드</button>
+    <button type="submit">PDF 다운로드</button>
   </form>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("generateBtn").addEventListener("click", () => {
-        const form = document.getElementById("infoForm");
-        const name = form.elements["kor_name"].value.trim();
-        const dept = form.elements["kor_dept"].value.trim();
-        const title = form.elements["kor_title"].value.trim();
+    document.getElementById("infoForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const korName = form.elements["kor_name"].value.trim();
+      const korDept = form.elements["kor_dept"].value.trim();
+      const korTitle = form.elements["kor_title"].value.trim();
 
-        console.log("📡 요청 보냄: ", { name, dept, title });
+      console.log("📦 요청 데이터:", { korName, korDept, korTitle });
 
-        fetch("https://kbalda-pdf-generator.onrender.com/generate", {
+      try {
+        const response = await fetch("https://kbalda-pdf-generator.onrender.com/generate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, dept, title })
-        })
-          .then(res => {
-            if (!res.ok) throw new Error("서버 오류: " + res.status);
-            return res.blob();
-          })
-          .then(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "namecard.pdf";
-            a.click();
-            URL.revokeObjectURL(url);
-            console.log("✅ PDF 다운로드 완료");
-          })
-          .catch(err => {
-            alert("PDF 생성 중 오류가 발생했습니다.");
-            console.error("❌ 오류:", err);
-          });
-      });
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: korName,
+            dept: korDept,
+            title: korTitle,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`서버 응답 오류: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "namecard.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+        console.log("✅ PDF 다운로드 완료");
+      } catch (error) {
+        console.error("❌ PDF 생성 오류:", error);
+        alert("PDF 생성 중 오류가 발생했습니다.");
+      }
     });
   </script>
 </body>
