@@ -107,18 +107,87 @@ function extractSheetId(url) {
     return match ? match[1] : null;
 }
 
-// 구글 시트 데이터 파싱 (간단한 형식 가정)
+// 구글 시트 데이터 파싱
 function parseGoogleSheetData(data) {
-    // 실제 구글 시트 구조에 맞게 파싱 로직 구현
-    // 여기서는 기본 로컬 데이터를 반환
-    return {
-        cards: cardsData || [],
-        categories: categoriesData || []
-    };
+    try {
+        const rows = data.table.rows;
+        const cardsMap = new Map();
+        const categoriesSet = new Set();
+
+        // 첫 번째 행은 헤더이므로 건너뜀
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i].c;
+            if (!row || row.length < 9) continue;
+
+            const cardId = row[0]?.v || '';
+            const cardName = row[1]?.v || '';
+            const issuer = row[2]?.v || '';
+            const annualFee = parseInt(row[3]?.v) || 0;
+            const category = row[4]?.v || '';
+            const benefitType = row[5]?.v || 'point';
+            const rate = parseFloat(row[6]?.v) || 0;
+            const maxMonthly = parseInt(row[7]?.v) || 0;
+            const description = row[8]?.v || '';
+
+            // 카드 정보 추가/업데이트
+            if (!cardsMap.has(cardId)) {
+                cardsMap.set(cardId, {
+                    id: cardId,
+                    name: cardName,
+                    issuer: issuer,
+                    annualFee: annualFee,
+                    benefits: []
+                });
+            }
+
+            // 혜택 정보 추가
+            cardsMap.get(cardId).benefits.push({
+                category: category,
+                type: benefitType,
+                rate: rate,
+                maxMonthly: maxMonthly,
+                description: description
+            });
+
+            // 카테고리 추가
+            categoriesSet.add(category);
+        }
+
+        // 카테고리 아이콘 매핑
+        const categoryIcons = {
+            '식비': '🍴',
+            '쇼핑': '🛍️',
+            '카페': '☕',
+            '카페/디저트': '☕',
+            '교통': '🚗',
+            '교통/주유': '🚗',
+            '통신': '📱',
+            '편의점': '🏪'
+        };
+
+        const categories = Array.from(categoriesSet).map(cat => ({
+            id: cat,
+            name: cat,
+            icon: categoryIcons[cat] || '💰'
+        }));
+
+        return {
+            cards: Array.from(cardsMap.values()),
+            categories: categories
+        };
+    } catch (error) {
+        console.error('구글 시트 파싱 오류:', error);
+        throw new Error('구글 시트 데이터 형식이 올바르지 않습니다.');
+    }
 }
 
 // 카드 선택 옵션 채우기
 function populateCardSelects() {
+    if (!cardsData || cardsData.length === 0) {
+        console.error('카드 데이터가 없습니다.');
+        return;
+    }
+
     const options = cardsData.map(card =>
         `<option value="${card.id}">${card.name} (${card.issuer})</option>`
     ).join('');
@@ -129,6 +198,11 @@ function populateCardSelects() {
 
 // 카테고리 입력 필드 생성
 function createCategoryInputs() {
+    if (!categoriesData || categoriesData.length === 0) {
+        console.error('카테고리 데이터가 없습니다.');
+        return;
+    }
+
     categoryInputsContainer.innerHTML = categoriesData.map(category => `
         <div class="category-input">
             <label for="spending-${category.id}">
@@ -171,8 +245,23 @@ function handleSpendingInput(e) {
 // 카드 선택 처리
 function handleCardSelection(cardNumber) {
     const select = cardNumber === 1 ? card1Select : card2Select;
+    const otherSelect = cardNumber === 1 ? card2Select : card1Select;
     const infoDiv = cardNumber === 1 ? card1Info : card2Info;
     const cardId = select.value;
+
+    // 같은 카드 선택 방지
+    if (cardId && cardId === otherSelect.value) {
+        alert('같은 카드를 두 번 선택할 수 없습니다. 다른 카드를 선택해주세요.');
+        select.value = '';
+        if (cardNumber === 1) {
+            selectedCard1 = null;
+        } else {
+            selectedCard2 = null;
+        }
+        infoDiv.innerHTML = '';
+        updateCalculateButton();
+        return;
+    }
 
     if (cardNumber === 1) {
         selectedCard1 = cardsData.find(card => card.id === cardId);
