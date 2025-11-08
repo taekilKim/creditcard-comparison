@@ -1,0 +1,241 @@
+{
+  "cards": [
+    {
+      "id": "card1",
+      "name": "KB국민 우리동네GS 카드",
+      "issuer": "KB국민카드",
+      "benefits": [
+        {
+          "category": "식비",
+          "type": "discount",
+          "rate": 10,
+          "maxMonthly": 10000,
+          "description": "음식점, 배달앱 10% 할인"
+        },
+        {
+          "category": "쇼핑",
+          "type": "discount",
+          "rate": 5,
+          "maxMonthly": 5000,
+          "description": "온라인쇼핑 5% 할인"
+        },
+        {
+          "category": "카페",
+          "type": "discount",
+          "rate": 15,
+          "maxMonthly": 5000,
+          "description": "커피전문점 15% 할인"
+        },
+        {
+          "category": "교통",
+          "type": "point",
+          "rate": 3,
+          "maxMonthly": 3000,
+          "description": "대중교통 3% 포인트 적립"
+        }
+      ],
+      "annualFee": 0,
+      "previousMonthUsage": 300000
+    },
+    {
+      "id": "card2",
+      "name": "신한카드 Deep Dream",
+      "issuer": "신한카드",
+      "benefits": [
+        {
+          "category": "식비",
+          "type": "discount",
+          "rate": 7,
+          "maxMonthly": 8000,
+          "description": "외식업종 7% 할인"
+        },
+        {
+          "category": "쇼핑",
+          "type": "point",
+          "rate": 5,
+          "maxMonthly": 10000,
+          "description": "온라인쇼핑 5% 포인트"
+        },
+        {
+          "category": "교통",
+          "type": "discount",
+          "rate": 10,
+          "maxMonthly": 7000,
+          "description": "주유 10% 할인"
+        },
+        {
+          "category": "통신",
+          "type": "discount",
+          "rate": 5,
+          "maxMonthly": 3000,
+          "description": "통신요금 5% 할인"
+        }
+      ],
+      "annualFee": 10000,
+      "previousMonthUsage": 300000
+    },
+    {
+      "id": "card3",
+      "name": "삼성 iD SIMPLE",
+      "issuer": "삼성카드",
+      "benefits": [
+        {
+          "category": "식비",
+          "type": "point",
+          "rate": 5,
+          "maxMonthly": 15000,
+          "description": "모든 가맹점 5% 포인트"
+        },
+        {
+          "category": "쇼핑",
+          "type": "point",
+          "rate": 5,
+          "maxMonthly": 15000,
+          "description": "모든 가맹점 5% 포인트"
+        },
+        {
+          "category": "카페",
+          "type": "point",
+          "rate": 5,
+          "maxMonthly": 15000,
+          "description": "모든 가맹점 5% 포인트"
+        },
+        {
+          "category": "교통",
+          "type": "point",
+          "rate": 5,
+          "maxMonthly": 15000,
+          "description": "모든 가맹점 5% 포인트"
+        },
+        {
+          "category": "통신",
+          "type": "point",
+          "rate": 5,
+          "maxMonthly": 15000,
+          "description": "모든 가맹점 5% 포인트"
+        }
+      ],
+      "annualFee": 0,
+      "previousMonthUsage": 300000
+    },
+    {
+      "id": "card4",
+      "name": "현대카드 M Edition3",
+      "issuer": "현대카드",
+      "benefits": [
+        {
+          "category": "식비",
+          "type": "point",
+          "rate": 1,
+          "maxMonthly": 999999,
+          "description": "모든 가맹점 1% M포인트"
+        },
+        {
+          "category": "쇼핑",
+          "type": "discount",
+          "rate": 10,
+          "maxMonthly": 5000,
+          "description": "백화점 10% 할인"
+        },
+        {
+          "category": "카페",
+          "type": "discount",
+          "rate": 20,
+          "maxMonthly": 6000,
+          "description": "스타벅스 20% 할인"
+        },
+        {
+          "category": "교통",
+          "type": "point",
+          "rate": 1,
+          "maxMonthly": 999999,
+          "description": "모든 가맹점 1% M포인트"
+        }
+      ],
+      "annualFee": 15000,
+      "previousMonthUsage": 300000
+    },
+    {
+      "id": "card5",
+      "name": "롯데카드 LOCA",
+      "issuer": "롯데카드",
+      "benefits": [
+        {
+          "category": "식비",
+          "type": "discount",
+          "rate": 8,
+          "maxMonthly": 10000,
+          "description": "배달앱 8% 할인"
+        },
+        {
+          "category": "쇼핑",
+          "type": "discount",
+          "rate": 7,
+          "maxMonthly": 10000,
+          "description": "롯데백화점 7% 할인"
+        },
+        {
+          "category": "카페",
+          "type": "point",
+          "rate": 10,
+          "maxMonthly": 5000,
+          "description": "카페 10% 포인트 적립"
+        },
+        {
+          "category": "편의점",
+          "type": "discount",
+          "rate": 5,
+          "maxMonthly": 3000,
+          "description": "편의점 5% 할인"
+        }
+      ],
+      "annualFee": 0,
+      "previousMonthUsage": 300000
+    },
+    {
+      "id": "card6",
+      "name": "우리카드 티타늄",
+      "issuer": "우리카드",
+      "benefits": [
+        {
+          "category": "식비",
+          "type": "discount",
+          "rate": 12,
+          "maxMonthly": 7000,
+          "description": "외식 12% 할인"
+        },
+        {
+          "category": "쇼핑",
+          "type": "point",
+          "rate": 6,
+          "maxMonthly": 8000,
+          "description": "쇼핑 6% 포인트"
+        },
+        {
+          "category": "교통",
+          "type": "discount",
+          "rate": 15,
+          "maxMonthly": 10000,
+          "description": "주유소 15% 할인"
+        },
+        {
+          "category": "통신",
+          "type": "discount",
+          "rate": 10,
+          "maxMonthly": 5000,
+          "description": "통신요금 10% 할인"
+        }
+      ],
+      "annualFee": 12000,
+      "previousMonthUsage": 300000
+    }
+  ],
+  "categories": [
+    {"id": "식비", "name": "식비", "icon": "🍴"},
+    {"id": "쇼핑", "name": "쇼핑", "icon": "🛍️"},
+    {"id": "카페", "name": "카페/디저트", "icon": "☕"},
+    {"id": "교통", "name": "교통/주유", "icon": "🚗"},
+    {"id": "통신", "name": "통신", "icon": "📱"},
+    {"id": "편의점", "name": "편의점", "icon": "🏪"}
+  ]
+}
