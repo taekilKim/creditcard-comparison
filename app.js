@@ -6,10 +6,6 @@ let selectedCard2 = null;
 let spendingData = {};
 
 // DOM 요소
-const dataSourceRadios = document.querySelectorAll('input[name="dataSource"]');
-const googleSheetInput = document.getElementById('googleSheetInput');
-const sheetUrlInput = document.getElementById('sheetUrl');
-const loadSheetBtn = document.getElementById('loadSheet');
 const card1Select = document.getElementById('card1Select');
 const card2Select = document.getElementById('card2Select');
 const card1Info = document.getElementById('card1Info');
@@ -22,28 +18,24 @@ const resultSection = document.getElementById('resultSection');
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    loadLocalData();
+    initializeData();
 });
 
 // 이벤트 리스너 설정
 function setupEventListeners() {
-    dataSourceRadios.forEach(radio => {
-        radio.addEventListener('change', handleDataSourceChange);
-    });
-
-    loadSheetBtn.addEventListener('click', handleLoadGoogleSheet);
     card1Select.addEventListener('change', () => handleCardSelection(1));
     card2Select.addEventListener('change', () => handleCardSelection(2));
     calculateBtn.addEventListener('click', calculateBenefits);
 }
 
-// 데이터 소스 변경 처리
-function handleDataSourceChange(e) {
-    if (e.target.value === 'google') {
-        googleSheetInput.classList.remove('hidden');
+// 데이터 초기화 (config.js 설정에 따라)
+async function initializeData() {
+    if (GOOGLE_SHEET_URL) {
+        // 구글 시트 URL이 설정되어 있으면 구글 시트에서 로드
+        await loadGoogleSheetData();
     } else {
-        googleSheetInput.classList.add('hidden');
-        loadLocalData();
+        // 없으면 로컬 데이터 사용
+        await loadLocalData();
     }
 }
 
@@ -63,21 +55,16 @@ async function loadLocalData() {
 }
 
 // 구글 시트 로드
-async function handleLoadGoogleSheet() {
-    const sheetUrl = sheetUrlInput.value.trim();
-    if (!sheetUrl) {
-        alert('구글 시트 URL을 입력해주세요.');
-        return;
-    }
-
+async function loadGoogleSheetData() {
     try {
         // 구글 시트 URL을 CSV/JSON으로 변환
         // 예: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit#gid=0
         // -> https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:json
 
-        const sheetId = extractSheetId(sheetUrl);
+        const sheetId = extractSheetId(GOOGLE_SHEET_URL);
         if (!sheetId) {
-            alert('올바른 구글 시트 URL이 아닙니다.');
+            console.error('올바른 구글 시트 URL이 아닙니다. 로컬 데이터로 전환합니다.');
+            await loadLocalData();
             return;
         }
 
@@ -94,10 +81,11 @@ async function handleLoadGoogleSheet() {
         populateCardSelects();
         createCategoryInputs();
 
-        alert('구글 시트 데이터를 성공적으로 불러왔습니다!');
+        console.log('구글 시트 데이터를 성공적으로 불러왔습니다!');
     } catch (error) {
         console.error('구글 시트 로드 실패:', error);
-        alert('구글 시트를 불러오는데 실패했습니다. "웹에 게시" 설정을 확인해주세요.');
+        console.log('로컬 데이터로 전환합니다.');
+        await loadLocalData();
     }
 }
 

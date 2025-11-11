@@ -56,9 +56,9 @@ npx http-server
    - 각 카드의 총 혜택, 연회비, 실질 이득이 표시됩니다
    - 어떤 카드가 얼마나 더 유리한지 한눈에 확인할 수 있습니다
 
-## 🔧 구글 시트 연동 설정
+## 🔧 구글 시트 연동 설정 (관리자용)
 
-구글 시트를 사용하면 카드 혜택 데이터를 쉽게 관리하고 업데이트할 수 있습니다.
+카드 혜택 데이터를 구글 시트로 관리하면 코드 수정 없이 데이터를 쉽게 업데이트할 수 있습니다.
 
 ### 구글 시트 생성 및 설정
 
@@ -90,19 +90,30 @@ npx http-server
    - "게시" 버튼 클릭
    - 생성된 URL 복사
 
-5. **서비스에서 사용**
-   - 웹페이지에서 "구글 시트 연동" 선택
-   - 복사한 URL을 입력하고 "불러오기" 클릭
+5. **config.js 파일 수정**
+   - 프로젝트 폴더의 `config.js` 파일을 엽니다
+   - `GOOGLE_SHEET_URL` 변수에 복사한 URL을 입력합니다:
+   ```javascript
+   const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit';
+   ```
+   - 파일을 저장하고 웹사이트를 새로고침하면 구글 시트 데이터가 자동으로 로드됩니다
+
+6. **데이터 업데이트**
+   - 구글 시트에서 카드 정보를 수정하면
+   - 웹사이트를 새로고침할 때 자동으로 최신 데이터가 반영됩니다
+   - 코드 수정이나 재배포 불필요!
 
 ## 📁 파일 구조
 
 ```
-kbalda-namecard-generator/
+creditcard-comparison/
 ├── index.html              # 메인 HTML 파일
 ├── styles.css              # CSS 스타일시트
 ├── app.js                  # JavaScript 로직
-├── cards-data.json         # 로컬 샘플 카드 데이터
+├── config.js               # 구글 시트 URL 설정 파일
+├── cards-data.json         # 로컬 샘플 카드 데이터 (백업용)
 ├── google-sheet-template.csv  # 구글 시트 템플릿
+├── netlify.toml           # Netlify 배포 설정
 ├── README.md               # 프로젝트 설명서
 └── .gitignore             # Git 무시 파일 목록
 ```
