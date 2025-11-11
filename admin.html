@@ -386,9 +386,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label>연회비 (원)</label>
-                    <input type="number" id="annualFee" placeholder="0" value="0">
-                    <p class="help-text">연회비가 없으면 0을 입력하세요</p>
+                    <label>연회비 옵션</label>
+                    <p class="help-text">카드 타입(국내/해외)과 브랜드(VISA/Mastercard)별로 다른 연회비를 설정할 수 있습니다</p>
+                    <div id="annualFeeList" style="margin-top: 15px; margin-bottom: 15px;">
+                        <!-- 연회비 옵션이 여기에 추가됩니다 -->
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="addAnnualFeeOption()">+ 연회비 옵션 추가</button>
                 </div>
 
                 <div class="benefits-section">
@@ -491,6 +494,7 @@
         });
 
         let benefitCounter = 0;
+        let annualFeeCounter = 0;
         const categories = [
             { id: '식비', name: '식비', icon: '🍴' },
             { id: '쇼핑', name: '쇼핑', icon: '🛍️' },
@@ -566,18 +570,89 @@
             benefit.remove();
         }
 
+        function addAnnualFeeOption() {
+            annualFeeCounter++;
+            const annualFeeList = document.getElementById('annualFeeList');
+
+            const feeOptionHTML = `
+                <div class="benefit-item" id="annualfee-${annualFeeCounter}" style="background: #fff8f0; border-color: #ffa726;">
+                    <div class="benefit-header">
+                        <div class="benefit-number" style="background: #ff9800;">${annualFeeCounter}</div>
+                        <button class="remove-benefit" onclick="removeAnnualFeeOption(${annualFeeCounter})">삭제</button>
+                    </div>
+
+                    <div class="benefit-grid">
+                        <div class="form-group">
+                            <label>카드 타입</label>
+                            <select class="fee-type">
+                                <option value="국내전용">국내전용</option>
+                                <option value="해외겸용">해외겸용</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>카드 브랜드</label>
+                            <select class="fee-brand">
+                                <option value="VISA">VISA</option>
+                                <option value="Mastercard">Mastercard</option>
+                                <option value="AMEX">AMEX</option>
+                                <option value="JCB">JCB</option>
+                                <option value="UnionPay">UnionPay</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label>연회비 (원)</label>
+                            <input type="number" class="fee-amount" placeholder="10000" step="1000" value="0">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            annualFeeList.insertAdjacentHTML('beforeend', feeOptionHTML);
+        }
+
+        function removeAnnualFeeOption(id) {
+            const feeOption = document.getElementById(`annualfee-${id}`);
+            feeOption.remove();
+        }
+
         function generateData() {
             const cardName = document.getElementById('cardName').value;
             const cardIssuer = document.getElementById('cardIssuer').value;
-            const annualFee = parseInt(document.getElementById('annualFee').value) || 0;
 
             if (!cardName || !cardIssuer) {
                 alert('카드명과 발급사를 입력해주세요!');
                 return;
             }
 
+            // 연회비 옵션 수집
+            const annualFeeOptions = [];
+            const feeItems = document.querySelectorAll('#annualFeeList .benefit-item');
+
+            feeItems.forEach(item => {
+                const type = item.querySelector('.fee-type').value;
+                const brand = item.querySelector('.fee-brand').value;
+                const fee = parseInt(item.querySelector('.fee-amount').value) || 0;
+
+                annualFeeOptions.push({
+                    type,
+                    brand,
+                    fee
+                });
+            });
+
+            // 연회비 옵션이 없으면 기본값 추가
+            if (annualFeeOptions.length === 0) {
+                annualFeeOptions.push({
+                    type: '국내전용',
+                    brand: 'VISA',
+                    fee: 0
+                });
+            }
+
             const benefits = [];
-            const benefitItems = document.querySelectorAll('.benefit-item');
+            const benefitItems = document.querySelectorAll('#benefitsList .benefit-item');
 
             benefitItems.forEach(item => {
                 const category = item.querySelector('.benefit-category').value;
@@ -605,17 +680,29 @@
                 name: cardName,
                 issuer: cardIssuer,
                 benefits: benefits,
-                annualFee: annualFee
+                annualFee: {
+                    options: annualFeeOptions
+                }
             };
 
             // JSON 출력
             document.getElementById('jsonOutput').textContent = JSON.stringify(cardData, null, 2);
 
-            // CSV 출력
-            let csv = '카드ID,카드명,발급사,연회비,카테고리,혜택타입,할인율,월최대한도,설명\n';
-            benefits.forEach(benefit => {
-                csv += `${cardId},${cardName},${cardIssuer},${annualFee},${benefit.category},${benefit.type},${benefit.rate},${benefit.maxMonthly},"${benefit.description}"\n`;
-            });
+            // CSV 출력 (연회비 옵션별로 행 생성)
+            let csv = '카드ID,카드명,발급사,연회비타입,연회비브랜드,연회비,카테고리,혜택타입,할인율,월최대한도,설명\n';
+
+            if (benefits.length > 0 && annualFeeOptions.length > 0) {
+                annualFeeOptions.forEach(feeOption => {
+                    benefits.forEach(benefit => {
+                        csv += `${cardId},${cardName},${cardIssuer},${feeOption.type},${feeOption.brand},${feeOption.fee},${benefit.category},${benefit.type},${benefit.rate},${benefit.maxMonthly},"${benefit.description}"\n`;
+                    });
+                });
+            } else if (annualFeeOptions.length > 0) {
+                annualFeeOptions.forEach(feeOption => {
+                    csv += `${cardId},${cardName},${cardIssuer},${feeOption.type},${feeOption.brand},${feeOption.fee},,,,,\n`;
+                });
+            }
+
             document.getElementById('csvOutput').textContent = csv;
         }
 
@@ -637,14 +724,16 @@
             if (confirm('입력한 모든 데이터가 삭제됩니다. 계속하시겠습니까?')) {
                 document.getElementById('cardName').value = '';
                 document.getElementById('cardIssuer').value = '';
-                document.getElementById('annualFee').value = '0';
+                document.getElementById('annualFeeList').innerHTML = '';
                 document.getElementById('benefitsList').innerHTML = '';
                 benefitCounter = 0;
+                annualFeeCounter = 0;
             }
         }
 
-        // 인증 성공 후 샘플 혜택 추가
+        // 인증 성공 후 샘플 추가
         function initializeForm() {
+            addAnnualFeeOption();
             addBenefit();
         }
 

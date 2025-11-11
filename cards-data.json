@@ -34,7 +34,11 @@
           "description": "대중교통 3% 포인트 적립"
         }
       ],
-      "annualFee": 0
+      "annualFee": {
+        "options": [
+          { "type": "국내전용", "brand": "VISA", "fee": 0 }
+        ]
+      }
     },
     {
       "id": "card2",
@@ -70,7 +74,13 @@
           "description": "통신요금 5% 할인"
         }
       ],
-      "annualFee": 10000
+      "annualFee": {
+        "options": [
+          { "type": "국내전용", "brand": "VISA", "fee": 10000 },
+          { "type": "해외겸용", "brand": "VISA", "fee": 13000 },
+          { "type": "해외겸용", "brand": "Mastercard", "fee": 13000 }
+        ]
+      }
     },
     {
       "id": "card3",
@@ -113,7 +123,11 @@
           "description": "모든 가맹점 5% 포인트"
         }
       ],
-      "annualFee": 0
+      "annualFee": {
+        "options": [
+          { "type": "국내전용", "brand": "VISA", "fee": 0 }
+        ]
+      }
     },
     {
       "id": "card4",
@@ -149,7 +163,13 @@
           "description": "모든 가맹점 1% M포인트"
         }
       ],
-      "annualFee": 15000
+      "annualFee": {
+        "options": [
+          { "type": "국내전용", "brand": "VISA", "fee": 15000 },
+          { "type": "해외겸용", "brand": "VISA", "fee": 18000 },
+          { "type": "해외겸용", "brand": "Mastercard", "fee": 18000 }
+        ]
+      }
     },
     {
       "id": "card5",
@@ -185,7 +205,11 @@
           "description": "편의점 5% 할인"
         }
       ],
-      "annualFee": 0
+      "annualFee": {
+        "options": [
+          { "type": "국내전용", "brand": "VISA", "fee": 0 }
+        ]
+      }
     },
     {
       "id": "card6",
@@ -221,7 +245,13 @@
           "description": "통신요금 10% 할인"
         }
       ],
-      "annualFee": 12000
+      "annualFee": {
+        "options": [
+          { "type": "국내전용", "brand": "VISA", "fee": 12000 },
+          { "type": "해외겸용", "brand": "VISA", "fee": 15000 },
+          { "type": "해외겸용", "brand": "Mastercard", "fee": 15000 }
+        ]
+      }
     }
   ],
   "categories": [
