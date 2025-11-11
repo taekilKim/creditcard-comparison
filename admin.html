@@ -389,7 +389,7 @@
                 <h2>새 카드 등록</h2>
 
                 <div class="alert alert-info">
-                    💡 카드 정보를 입력하고 저장하면 브라우저에 저장됩니다. 다른 브라우저에서는 보이지 않습니다.
+                    💡 카드 정보를 입력하고 저장하면 구글 시트에 자동으로 저장됩니다. 모든 브라우저에서 동기화됩니다.
                 </div>
 
                 <div class="form-group">
@@ -451,12 +451,13 @@
 
     <script>
         const ADMIN_PASSWORD = 'admin1234';
-        const STORAGE_KEY = 'creditcard_data';
+        const API_ENDPOINT = '/.netlify/functions/manage-cards';
 
         let benefitCounter = 0;
         let annualFeeCounter = 0;
         let tierCounters = {}; // benefitId -> tierCounter
         let editingCardId = null;
+        let allCardsData = { cards: [], categories: [] }; // API에서 로드한 전체 데이터
 
         const categories = [
             { id: '전체', name: '전체 (모든 업종)', icon: '💳' },
@@ -695,7 +696,7 @@
         }
 
         // 카드 저장
-        function saveCard() {
+        async function saveCard() {
             const cardName = document.getElementById('cardName').value;
             const cardIssuer = document.getElementById('cardIssuer').value;
 
@@ -752,20 +753,31 @@
                 annualFee: { options: annualFeeOptions }
             };
 
-            // localStorage에 저장
-            const storage = getStorage();
-            const existingIndex = storage.cards.findIndex(c => c.id === cardId);
+            try {
+                // Google Sheets API 호출
+                const method = editingCardId ? 'PUT' : 'POST';
+                const body = editingCardId ? { cardId, cardData } : cardData;
 
-            if (existingIndex >= 0) {
-                storage.cards[existingIndex] = cardData;
-            } else {
-                storage.cards.push(cardData);
+                const response = await fetch(API_ENDPOINT, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || '저장 실패');
+                }
+
+                alert('✅ 카드가 구글 시트에 저장되었습니다!');
+                resetForm();
+                editingCardId = null;
+                loadCardList(); // 목록 새로고침
+            } catch (error) {
+                console.error('저장 오류:', error);
+                alert('❌ 저장 실패: ' + error.message + '\n\n구글 시트 설정을 확인하세요.');
             }
-
-            saveStorage(storage);
-            alert('✅ 카드가 저장되었습니다!');
-            resetForm();
-            editingCardId = null;
         }
 
         // 폼 초기화
@@ -782,51 +794,54 @@
             addBenefit();
         }
 
-        // localStorage 관리
-        function getStorage() {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                return JSON.parse(stored);
-            }
-            return { cards: [], categories: categories };
-        }
-
-        function saveStorage(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        }
-
-        // 카드 목록 로드
-        function loadCardList() {
-            const storage = getStorage();
+        // 카드 목록 로드 (Google Sheets에서)
+        async function loadCardList() {
             const container = document.getElementById('cardListContainer');
             const emptyState = document.getElementById('emptyState');
 
-            if (storage.cards.length === 0) {
-                container.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
+            try {
+                const response = await fetch(API_ENDPOINT);
+                const data = await response.json();
 
-            emptyState.style.display = 'none';
-            container.innerHTML = storage.cards.map(card => `
-                <div class="card-item">
-                    <h3>${card.name}</h3>
-                    <p><strong>발급사:</strong> ${card.issuer}</p>
-                    <p><strong>혜택 수:</strong> ${card.benefits.length}개</p>
-                    <p><strong>연회비 옵션:</strong> ${card.annualFee.options.length}개</p>
-                    <div class="card-item-actions">
-                        <button class="btn btn-primary" onclick="editCard('${card.id}')">수정</button>
-                        <button class="btn btn-danger" onclick="deleteCard('${card.id}')">삭제</button>
+                if (!response.ok) {
+                    throw new Error(data.error || '데이터 로드 실패');
+                }
+
+                allCardsData = data;
+
+                if (!data.cards || data.cards.length === 0) {
+                    container.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                container.innerHTML = data.cards.map(card => `
+                    <div class="card-item">
+                        <h3>${card.name}</h3>
+                        <p><strong>발급사:</strong> ${card.issuer}</p>
+                        <p><strong>혜택 수:</strong> ${card.benefits.length}개</p>
+                        <p><strong>연회비 옵션:</strong> ${card.annualFee.options.length}개</p>
+                        <div class="card-item-actions">
+                            <button class="btn btn-primary" onclick="editCard('${card.id}')">수정</button>
+                            <button class="btn btn-danger" onclick="deleteCard('${card.id}')">삭제</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (error) {
+                console.error('카드 목록 로드 오류:', error);
+                container.innerHTML = `<div class="alert alert-info">⚠️ 카드 목록을 불러올 수 없습니다: ${error.message}</div>`;
+                emptyState.style.display = 'none';
+            }
         }
 
         // 카드 수정
         function editCard(cardId) {
-            const storage = getStorage();
-            const card = storage.cards.find(c => c.id === cardId);
-            if (!card) return;
+            const card = allCardsData.cards.find(c => c.id === cardId);
+            if (!card) {
+                alert('카드를 찾을 수 없습니다.');
+                return;
+            }
 
             // 폼 초기화
             resetForm();
@@ -881,14 +896,28 @@
         }
 
         // 카드 삭제
-        function deleteCard(cardId) {
+        async function deleteCard(cardId) {
             if (!confirm('정말 이 카드를 삭제하시겠습니까?')) return;
 
-            const storage = getStorage();
-            storage.cards = storage.cards.filter(c => c.id !== cardId);
-            saveStorage(storage);
-            loadCardList();
-            alert('✅ 카드가 삭제되었습니다.');
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cardId })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error || '삭제 실패');
+                }
+
+                alert('✅ 카드가 삭제되었습니다.');
+                loadCardList(); // 목록 새로고침
+            } catch (error) {
+                console.error('삭제 오류:', error);
+                alert('❌ 삭제 실패: ' + error.message);
+            }
         }
     </script>
 </body>
