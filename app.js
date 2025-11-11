@@ -6,6 +6,9 @@ let selectedCard2 = null;
 let selectedCard1FeeOption = null;
 let selectedCard2FeeOption = null;
 let spendingData = {};
+let previousMonthUsage = 0; // 전월실적
+
+const STORAGE_KEY = 'creditcard_data';
 
 // DOM 요소
 const card1Select = document.getElementById('card1Select');
@@ -30,15 +33,57 @@ function setupEventListeners() {
     calculateBtn.addEventListener('click', calculateBenefits);
 }
 
-// 데이터 초기화 (config.js 설정에 따라)
+// 데이터 초기화 - localStorage 우선, 없으면 API/로컬
 async function initializeData() {
+    // 1. localStorage 먼저 확인
+    const localData = loadFromLocalStorage();
+    if (localData && localData.cards && localData.cards.length > 0) {
+        console.log('localStorage에서 데이터 로드:', localData.cards.length, '개 카드');
+        cardsData = localData.cards;
+        categoriesData = localData.categories || getDefaultCategories();
+        populateCardSelects();
+        createCategoryInputs();
+        return;
+    }
+
+    // 2. localStorage가 없으면 기존 방식 (API 또는 로컬 JSON)
     if (DATA_SOURCE === 'api') {
-        // API를 통해 구글 시트 데이터 로드 (보안 처리됨)
         await loadDataFromAPI();
     } else {
-        // 로컬 데이터 사용
         await loadLocalData();
     }
+}
+
+// localStorage 로드
+function loadFromLocalStorage() {
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (error) {
+        console.error('localStorage 로드 오류:', error);
+    }
+    return null;
+}
+
+// 기본 카테고리
+function getDefaultCategories() {
+    return [
+        { id: '전체', name: '전체 (모든 업종)', icon: '💳' },
+        { id: '식비', name: '식비', icon: '🍴' },
+        { id: '쇼핑', name: '쇼핑', icon: '🛍️' },
+        { id: '카페', name: '카페/디저트', icon: '☕' },
+        { id: '교통', name: '교통/주유', icon: '🚗' },
+        { id: '통신', name: '통신', icon: '📱' },
+        { id: '편의점', name: '편의점', icon: '🏪' },
+        { id: 'OTT', name: 'OTT/구독', icon: '📺' },
+        { id: '온라인쇼핑', name: '온라인쇼핑', icon: '🖥️' },
+        { id: '배달', name: '배달앱', icon: '🛵' },
+        { id: '영화', name: '영화/문화', icon: '🎬' },
+        { id: '병원', name: '병원/약국', icon: '🏥' },
+        { id: '뷰티', name: '뷰티/미용', icon: '💅' }
+    ];
 }
 
 // 로컬 데이터 로드
@@ -47,7 +92,7 @@ async function loadLocalData() {
         const response = await fetch('cards-data.json');
         const data = await response.json();
         cardsData = data.cards;
-        categoriesData = data.categories;
+        categoriesData = data.categories || getDefaultCategories();
         populateCardSelects();
         createCategoryInputs();
     } catch (error) {
@@ -123,7 +168,7 @@ function parseGoogleSheetData(data) {
                 cardName = row[1]?.v || '';
                 issuer = row[2]?.v || '';
                 feeType = row[3]?.v || '국내전용';
-                feeBrand = row[4]?.v || 'VISA';
+                feeBrand = row[4]?.v || null;
                 annualFee = parseInt(row[5]?.v) || 0;
                 category = row[6]?.v || '';
                 benefitType = row[7]?.v || 'point';
@@ -136,7 +181,7 @@ function parseGoogleSheetData(data) {
                 cardName = row[1]?.v || '';
                 issuer = row[2]?.v || '';
                 feeType = '국내전용';
-                feeBrand = 'VISA';
+                feeBrand = null;
                 annualFee = parseInt(row[3]?.v) || 0;
                 category = row[4]?.v || '';
                 benefitType = row[5]?.v || 'point';
@@ -191,6 +236,7 @@ function parseGoogleSheetData(data) {
 
         // 카테고리 아이콘 매핑
         const categoryIcons = {
+            '전체': '💳',
             '식비': '🍴',
             '쇼핑': '🛍️',
             '카페': '☕',
@@ -245,7 +291,32 @@ function createCategoryInputs() {
         return;
     }
 
-    categoryInputsContainer.innerHTML = categoriesData.map(category => `
+    // 전월실적 입력 추가
+    let html = `
+        <div class="category-input" style="grid-column: 1 / -1; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 15px;">
+            <label for="previousMonthUsage" style="display: flex; align-items: center; gap: 10px;">
+                <span class="category-icon">💰</span>
+                <span>전월 카드 사용 실적 (원)</span>
+            </label>
+            <input
+                type="number"
+                id="previousMonthUsage"
+                placeholder="0"
+                min="0"
+                step="10000"
+                value="0"
+                style="margin-top: 10px;"
+            >
+            <p style="font-size: 0.85rem; color: #856404; margin-top: 5px;">
+                전월실적 구간별 혜택이 있는 카드의 경우 이 값을 기준으로 계산됩니다
+            </p>
+        </div>
+    `;
+
+    // "전체" 카테고리는 제외하고 표시
+    const displayCategories = categoriesData.filter(cat => cat.id !== '전체');
+
+    html += displayCategories.map(category => `
         <div class="category-input">
             <label for="spending-${category.id}">
                 <span class="category-icon">${category.icon}</span>
@@ -263,8 +334,18 @@ function createCategoryInputs() {
         </div>
     `).join('');
 
+    categoryInputsContainer.innerHTML = html;
+
+    // 전월실적 입력 이벤트 리스너
+    const prevMonthInput = document.getElementById('previousMonthUsage');
+    if (prevMonthInput) {
+        prevMonthInput.addEventListener('input', (e) => {
+            previousMonthUsage = parseInt(e.target.value) || 0;
+        });
+    }
+
     // 입력 이벤트 리스너 추가
-    const inputs = categoryInputsContainer.querySelectorAll('input');
+    const inputs = categoryInputsContainer.querySelectorAll('input[data-category]');
     inputs.forEach(input => {
         input.addEventListener('input', handleSpendingInput);
     });
@@ -323,13 +404,30 @@ function handleCardSelection(cardNumber) {
 
 // 카드 정보 표시
 function displayCardInfo(card, container) {
-    const benefitsHtml = card.benefits.map(benefit => `
-        <div class="benefit-item">
-            <span class="benefit-category">${benefit.category}:</span>
-            ${benefit.type === 'discount' ? '할인' : '포인트'} ${benefit.rate}%
-            (월 최대 ${benefit.maxMonthly.toLocaleString()}원)
-        </div>
-    `).join('');
+    const benefitsHtml = card.benefits.map(benefit => {
+        if (benefit.tiers && benefit.tiers.length > 0) {
+            // 구간별 혜택
+            const tiersHtml = benefit.tiers.map(tier =>
+                `${tier.minPreviousMonth.toLocaleString()}원 이상: ${tier.rate}% (월 ${tier.maxMonthly.toLocaleString()}원)`
+            ).join('<br>');
+            return `
+                <div class="benefit-item">
+                    <span class="benefit-category">${benefit.category}:</span>
+                    ${benefit.type === 'discount' ? '할인' : '포인트'}<br>
+                    <small style="color: #666;">${tiersHtml}</small>
+                </div>
+            `;
+        } else {
+            // 단일 혜택
+            return `
+                <div class="benefit-item">
+                    <span class="benefit-category">${benefit.category}:</span>
+                    ${benefit.type === 'discount' ? '할인' : '포인트'} ${benefit.rate}%
+                    (월 최대 ${benefit.maxMonthly.toLocaleString()}원)
+                </div>
+            `;
+        }
+    }).join('');
 
     // 연회비 구조 처리 (구버전 호환)
     let annualFeeOptions = [];
@@ -339,7 +437,7 @@ function displayCardInfo(card, container) {
         // 구버전 호환: 단순 숫자인 경우
         annualFeeOptions = [{
             type: '국내전용',
-            brand: 'VISA',
+            brand: null,
             fee: card.annualFee
         }];
     }
@@ -348,9 +446,10 @@ function displayCardInfo(card, container) {
     let feeHtml = '';
     if (annualFeeOptions.length > 1) {
         const cardNumber = container.id === 'card1Info' ? 1 : 2;
-        const feeOptionsHtml = annualFeeOptions.map((option, index) =>
-            `<option value="${index}">${option.type} ${option.brand} - ${option.fee.toLocaleString()}원</option>`
-        ).join('');
+        const feeOptionsHtml = annualFeeOptions.map((option, index) => {
+            const brandText = option.brand ? ` ${option.brand}` : '';
+            return `<option value="${index}">${option.type}${brandText} - ${option.fee.toLocaleString()}원</option>`;
+        }).join('');
 
         feeHtml = `
             <p>
@@ -368,7 +467,9 @@ function displayCardInfo(card, container) {
             selectedCard2FeeOption = annualFeeOptions[0];
         }
     } else if (annualFeeOptions.length === 1) {
-        feeHtml = `<p>연회비: ${annualFeeOptions[0].fee.toLocaleString()}원 (${annualFeeOptions[0].type} ${annualFeeOptions[0].brand})</p>`;
+        const option = annualFeeOptions[0];
+        const brandText = option.brand ? ` (${option.type} ${option.brand})` : ` (${option.type})`;
+        feeHtml = `<p>연회비: ${option.fee.toLocaleString()}원${brandText}</p>`;
 
         // 단일 옵션 자동 설정
         const cardNumber = container.id === 'card1Info' ? 1 : 2;
@@ -434,23 +535,65 @@ function calculateCardBenefit(card, cardNumber) {
     const breakdown = [];
 
     card.benefits.forEach(benefit => {
-        const spending = spendingData[benefit.category] || 0;
-        if (spending > 0) {
-            let benefitAmount = spending * (benefit.rate / 100);
+        // 구간별 혜택 vs 단일 혜택
+        let rate = 0;
+        let maxMonthly = 0;
 
-            // 월 최대 한도 적용
-            if (benefitAmount > benefit.maxMonthly) {
-                benefitAmount = benefit.maxMonthly;
+        if (benefit.tiers && benefit.tiers.length > 0) {
+            // 전월실적 구간별 혜택 - 가장 높은 구간 찾기
+            const sortedTiers = [...benefit.tiers].sort((a, b) => b.minPreviousMonth - a.minPreviousMonth);
+            for (const tier of sortedTiers) {
+                if (previousMonthUsage >= tier.minPreviousMonth) {
+                    rate = tier.rate;
+                    maxMonthly = tier.maxMonthly;
+                    break;
+                }
             }
 
-            totalBenefit += benefitAmount;
-            breakdown.push({
-                category: benefit.category,
-                amount: benefitAmount,
-                type: benefit.type,
-                rate: benefit.rate,
-                spending: spending
-            });
+            // 조건을 만족하는 구간이 없으면 이 혜택은 적용 안 됨
+            if (rate === 0) {
+                return;
+            }
+        } else {
+            // 단일 혜택
+            rate = benefit.rate || 0;
+            maxMonthly = benefit.maxMonthly || 0;
+        }
+
+        // "전체" 카테고리 처리: 모든 소비에 적용
+        if (benefit.category === '전체') {
+            const totalSpending = Object.values(spendingData).reduce((sum, val) => sum + val, 0);
+            if (totalSpending > 0) {
+                let benefitAmount = totalSpending * (rate / 100);
+                if (benefitAmount > maxMonthly) {
+                    benefitAmount = maxMonthly;
+                }
+                totalBenefit += benefitAmount;
+                breakdown.push({
+                    category: benefit.category,
+                    amount: benefitAmount,
+                    type: benefit.type,
+                    rate: rate,
+                    spending: totalSpending
+                });
+            }
+        } else {
+            // 특정 카테고리
+            const spending = spendingData[benefit.category] || 0;
+            if (spending > 0) {
+                let benefitAmount = spending * (rate / 100);
+                if (benefitAmount > maxMonthly) {
+                    benefitAmount = maxMonthly;
+                }
+                totalBenefit += benefitAmount;
+                breakdown.push({
+                    category: benefit.category,
+                    amount: benefitAmount,
+                    type: benefit.type,
+                    rate: rate,
+                    spending: spending
+                });
+            }
         }
     });
 
@@ -529,7 +672,8 @@ function createResultCardHTML(result) {
     // 연회비 옵션 표시
     let feeOptionText = '';
     if (result.feeOption) {
-        feeOptionText = ` (${result.feeOption.type} ${result.feeOption.brand})`;
+        const brandText = result.feeOption.brand ? ` ${result.feeOption.brand}` : '';
+        feeOptionText = ` (${result.feeOption.type}${brandText})`;
     }
 
     return `
@@ -545,7 +689,7 @@ function createResultCardHTML(result) {
         </div>
         <div class="benefit-breakdown">
             <h4>📊 카테고리별 혜택</h4>
-            ${breakdownHtml}
+            ${breakdownHtml || '<p style="color: #999;">혜택 내역 없음</p>'}
         </div>
         <p style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
             연간 약 ${Math.round(result.netBenefit * 12).toLocaleString()}원
