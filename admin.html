@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>신용카드 관리자 도구</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .panel h2 {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .benefits-section {
+            margin-top: 30px;
+        }
+
+        .benefit-item {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .benefit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .benefit-number {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .remove-benefit {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .remove-benefit:hover {
+            background: #dc2626;
+        }
+
+        .benefit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .preview {
+            background: #f9fafb;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .preview pre {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .category-select {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .category-option {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .category-option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .category-option.selected {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            color: #1e40af;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎴 신용카드 혜택 관리 도구</h1>
+            <p>복잡한 카드 혜택을 쉽게 입력하고 표준화된 데이터로 변환하세요</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- 입력 패널 -->
+            <div class="panel">
+                <h2>카드 정보 입력</h2>
+
+                <div class="alert alert-info">
+                    💡 복잡한 혜택도 간단하게! 카테고리를 선택하고 기본 정보만 입력하면 됩니다.
+                </div>
+
+                <div class="form-group">
+                    <label>카드명</label>
+                    <input type="text" id="cardName" placeholder="예: KB국민 My WE:SH">
+                </div>
+
+                <div class="form-group">
+                    <label>발급사</label>
+                    <select id="cardIssuer">
+                        <option value="">선택하세요</option>
+                        <option value="KB국민카드">KB국민카드</option>
+                        <option value="신한카드">신한카드</option>
+                        <option value="삼성카드">삼성카드</option>
+                        <option value="현대카드">현대카드</option>
+                        <option value="롯데카드">롯데카드</option>
+                        <option value="우리카드">우리카드</option>
+                        <option value="하나카드">하나카드</option>
+                        <option value="NH농협카드">NH농협카드</option>
+                        <option value="BC카드">BC카드</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>연회비 (원)</label>
+                    <input type="number" id="annualFee" placeholder="0" value="0">
+                    <p class="help-text">연회비가 없으면 0을 입력하세요</p>
+                </div>
+
+                <div class="benefits-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>카드 혜택</h3>
+                        <button class="btn btn-primary" onclick="addBenefit()">+ 혜택 추가</button>
+                    </div>
+
+                    <div id="benefitsList" style="margin-top: 20px;">
+                        <!-- 혜택 항목이 여기에 추가됩니다 -->
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-success" onclick="generateData()">📊 데이터 생성</button>
+                    <button class="btn btn-secondary" onclick="resetForm()">🔄 초기화</button>
+                </div>
+            </div>
+
+            <!-- 미리보기 패널 -->
+            <div class="panel">
+                <h2>생성된 데이터</h2>
+
+                <div class="alert alert-info">
+                    아래 JSON 데이터를 복사하여 cards-data.json에 추가하거나, 구글 시트 템플릿 형식으로 변환할 수 있습니다.
+                </div>
+
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="copyJSON()">📋 JSON 복사</button>
+                    <button class="btn btn-primary" onclick="copyCSV()">📊 CSV 복사 (구글 시트용)</button>
+                </div>
+
+                <div class="preview">
+                    <h4 style="margin-bottom: 10px;">JSON 형식</h4>
+                    <pre id="jsonOutput">{
+  "id": "card1",
+  "name": "카드명을 입력하세요",
+  "issuer": "발급사를 선택하세요",
+  "benefits": [],
+  "annualFee": 0
+}</pre>
+                </div>
+
+                <div class="preview" style="margin-top: 20px;">
+                    <h4 style="margin-bottom: 10px;">CSV 형식 (구글 시트)</h4>
+                    <pre id="csvOutput">카드ID,카드명,발급사,연회비,카테고리,혜택타입,할인율,월최대한도,설명</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let benefitCounter = 0;
+        const categories = [
+            { id: '식비', name: '식비', icon: '🍴' },
+            { id: '쇼핑', name: '쇼핑', icon: '🛍️' },
+            { id: '카페', name: '카페/디저트', icon: '☕' },
+            { id: '교통', name: '교통/주유', icon: '🚗' },
+            { id: '통신', name: '통신', icon: '📱' },
+            { id: '편의점', name: '편의점', icon: '🏪' },
+            { id: 'OTT', name: 'OTT/구독', icon: '📺' },
+            { id: '온라인쇼핑', name: '온라인쇼핑', icon: '🖥️' },
+            { id: '배달', name: '배달앱', icon: '🛵' },
+            { id: '영화', name: '영화/문화', icon: '🎬' },
+            { id: '병원', name: '병원/약국', icon: '🏥' },
+            { id: '뷰티', name: '뷰티/미용', icon: '💅' }
+        ];
+
+        function addBenefit() {
+            benefitCounter++;
+            const benefitsList = document.getElementById('benefitsList');
+
+            const benefitHTML = `
+                <div class="benefit-item" id="benefit-${benefitCounter}">
+                    <div class="benefit-header">
+                        <div class="benefit-number">${benefitCounter}</div>
+                        <button class="remove-benefit" onclick="removeBenefit(${benefitCounter})">삭제</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>혜택 카테고리</label>
+                        <select class="benefit-category" data-id="${benefitCounter}">
+                            ${categories.map(cat => `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`).join('')}
+                        </select>
+                    </div>
+
+                    <div class="benefit-grid">
+                        <div class="form-group">
+                            <label>혜택 타입</label>
+                            <select class="benefit-type">
+                                <option value="discount">할인</option>
+                                <option value="point">포인트 적립</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>할인율/적립률 (%)</label>
+                            <input type="number" class="benefit-rate" placeholder="10" step="0.1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>월 최대 한도 (원)</label>
+                            <input type="number" class="benefit-max" placeholder="10000" step="1000">
+                        </div>
+
+                        <div class="form-group">
+                            <label>전월 실적 (원)</label>
+                            <input type="number" class="benefit-requirement" placeholder="300000" step="10000" value="300000">
+                            <p class="help-text">없으면 0</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>상세 설명 (선택사항)</label>
+                        <textarea class="benefit-description" placeholder="예: 음식점(한식, 일식, 중식 등), 편의점(GS25, CU) 대상. 백화점 입점 매장 제외"></textarea>
+                        <p class="help-text">포함/제외 업종을 자세히 입력하세요</p>
+                    </div>
+                </div>
+            `;
+
+            benefitsList.insertAdjacentHTML('beforeend', benefitHTML);
+        }
+
+        function removeBenefit(id) {
+            const benefit = document.getElementById(`benefit-${id}`);
+            benefit.remove();
+        }
+
+        function generateData() {
+            const cardName = document.getElementById('cardName').value;
+            const cardIssuer = document.getElementById('cardIssuer').value;
+            const annualFee = parseInt(document.getElementById('annualFee').value) || 0;
+
+            if (!cardName || !cardIssuer) {
+                alert('카드명과 발급사를 입력해주세요!');
+                return;
+            }
+
+            const benefits = [];
+            const benefitItems = document.querySelectorAll('.benefit-item');
+
+            benefitItems.forEach(item => {
+                const category = item.querySelector('.benefit-category').value;
+                const type = item.querySelector('.benefit-type').value;
+                const rate = parseFloat(item.querySelector('.benefit-rate').value) || 0;
+                const maxMonthly = parseInt(item.querySelector('.benefit-max').value) || 0;
+                const requirement = parseInt(item.querySelector('.benefit-requirement').value) || 0;
+                const description = item.querySelector('.benefit-description').value;
+
+                benefits.push({
+                    category,
+                    type,
+                    rate,
+                    maxMonthly,
+                    previousMonthUsage: requirement,
+                    description: description || `${category} ${rate}% ${type === 'discount' ? '할인' : '적립'}`
+                });
+            });
+
+            // 카드 ID 생성 (카드명 기반)
+            const cardId = 'card_' + cardName.replace(/\s+/g, '_').toLowerCase();
+
+            const cardData = {
+                id: cardId,
+                name: cardName,
+                issuer: cardIssuer,
+                benefits: benefits,
+                annualFee: annualFee
+            };
+
+            // JSON 출력
+            document.getElementById('jsonOutput').textContent = JSON.stringify(cardData, null, 2);
+
+            // CSV 출력
+            let csv = '카드ID,카드명,발급사,연회비,카테고리,혜택타입,할인율,월최대한도,설명\n';
+            benefits.forEach(benefit => {
+                csv += `${cardId},${cardName},${cardIssuer},${annualFee},${benefit.category},${benefit.type},${benefit.rate},${benefit.maxMonthly},"${benefit.description}"\n`;
+            });
+            document.getElementById('csvOutput').textContent = csv;
+        }
+
+        function copyJSON() {
+            const jsonText = document.getElementById('jsonOutput').textContent;
+            navigator.clipboard.writeText(jsonText).then(() => {
+                alert('JSON 데이터가 클립보드에 복사되었습니다!');
+            });
+        }
+
+        function copyCSV() {
+            const csvText = document.getElementById('csvOutput').textContent;
+            navigator.clipboard.writeText(csvText).then(() => {
+                alert('CSV 데이터가 클립보드에 복사되었습니다!\n구글 시트에 붙여넣기 하세요.');
+            });
+        }
+
+        function resetForm() {
+            if (confirm('입력한 모든 데이터가 삭제됩니다. 계속하시겠습니까?')) {
+                document.getElementById('cardName').value = '';
+                document.getElementById('cardIssuer').value = '';
+                document.getElementById('annualFee').value = '0';
+                document.getElementById('benefitsList').innerHTML = '';
+                benefitCounter = 0;
+            }
+        }
+
+        // 페이지 로드 시 샘플 혜택 하나 추가
+        window.addEventListener('DOMContentLoaded', () => {
+            addBenefit();
+        });
+    </script>
+</body>
+</html>

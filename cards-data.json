@@ -34,8 +34,7 @@
           "description": "대중교통 3% 포인트 적립"
         }
       ],
-      "annualFee": 0,
-      "previousMonthUsage": 300000
+      "annualFee": 0
     },
     {
       "id": "card2",
@@ -71,8 +70,7 @@
           "description": "통신요금 5% 할인"
         }
       ],
-      "annualFee": 10000,
-      "previousMonthUsage": 300000
+      "annualFee": 10000
     },
     {
       "id": "card3",
@@ -83,40 +81,39 @@
           "category": "식비",
           "type": "point",
           "rate": 5,
-          "maxMonthly": 15000,
+          "maxMonthly": 5000,
           "description": "모든 가맹점 5% 포인트"
         },
         {
           "category": "쇼핑",
           "type": "point",
           "rate": 5,
-          "maxMonthly": 15000,
+          "maxMonthly": 5000,
           "description": "모든 가맹점 5% 포인트"
         },
         {
           "category": "카페",
           "type": "point",
           "rate": 5,
-          "maxMonthly": 15000,
+          "maxMonthly": 5000,
           "description": "모든 가맹점 5% 포인트"
         },
         {
           "category": "교통",
           "type": "point",
           "rate": 5,
-          "maxMonthly": 15000,
+          "maxMonthly": 5000,
           "description": "모든 가맹점 5% 포인트"
         },
         {
           "category": "통신",
           "type": "point",
           "rate": 5,
-          "maxMonthly": 15000,
+          "maxMonthly": 5000,
           "description": "모든 가맹점 5% 포인트"
         }
       ],
-      "annualFee": 0,
-      "previousMonthUsage": 300000
+      "annualFee": 0
     },
     {
       "id": "card4",
@@ -152,8 +149,7 @@
           "description": "모든 가맹점 1% M포인트"
         }
       ],
-      "annualFee": 15000,
-      "previousMonthUsage": 300000
+      "annualFee": 15000
     },
     {
       "id": "card5",
@@ -189,8 +185,7 @@
           "description": "편의점 5% 할인"
         }
       ],
-      "annualFee": 0,
-      "previousMonthUsage": 300000
+      "annualFee": 0
     },
     {
       "id": "card6",
@@ -226,8 +221,7 @@
           "description": "통신요금 10% 할인"
         }
       ],
-      "annualFee": 12000,
-      "previousMonthUsage": 300000
+      "annualFee": 12000
     }
   ],
   "categories": [

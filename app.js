@@ -6,10 +6,6 @@ let selectedCard2 = null;
 let spendingData = {};
 
 // DOM 요소
-const dataSourceRadios = document.querySelectorAll('input[name="dataSource"]');
-const googleSheetInput = document.getElementById('googleSheetInput');
-const sheetUrlInput = document.getElementById('sheetUrl');
-const loadSheetBtn = document.getElementById('loadSheet');
 const card1Select = document.getElementById('card1Select');
 const card2Select = document.getElementById('card2Select');
 const card1Info = document.getElementById('card1Info');
@@ -22,28 +18,24 @@ const resultSection = document.getElementById('resultSection');
 // 초기화
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    loadLocalData();
+    initializeData();
 });
 
 // 이벤트 리스너 설정
 function setupEventListeners() {
-    dataSourceRadios.forEach(radio => {
-        radio.addEventListener('change', handleDataSourceChange);
-    });
-
-    loadSheetBtn.addEventListener('click', handleLoadGoogleSheet);
     card1Select.addEventListener('change', () => handleCardSelection(1));
     card2Select.addEventListener('change', () => handleCardSelection(2));
     calculateBtn.addEventListener('click', calculateBenefits);
 }
 
-// 데이터 소스 변경 처리
-function handleDataSourceChange(e) {
-    if (e.target.value === 'google') {
-        googleSheetInput.classList.remove('hidden');
+// 데이터 초기화 (config.js 설정에 따라)
+async function initializeData() {
+    if (DATA_SOURCE === 'api') {
+        // API를 통해 구글 시트 데이터 로드 (보안 처리됨)
+        await loadDataFromAPI();
     } else {
-        googleSheetInput.classList.add('hidden');
-        loadLocalData();
+        // 로컬 데이터 사용
+        await loadLocalData();
     }
 }
 
@@ -62,31 +54,28 @@ async function loadLocalData() {
     }
 }
 
-// 구글 시트 로드
-async function handleLoadGoogleSheet() {
-    const sheetUrl = sheetUrlInput.value.trim();
-    if (!sheetUrl) {
-        alert('구글 시트 URL을 입력해주세요.');
-        return;
-    }
-
+// API를 통해 데이터 로드 (보안 처리됨)
+async function loadDataFromAPI() {
     try {
-        // 구글 시트 URL을 CSV/JSON으로 변환
-        // 예: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit#gid=0
-        // -> https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:json
+        console.log('API를 통해 데이터를 불러오는 중...');
 
-        const sheetId = extractSheetId(sheetUrl);
-        if (!sheetId) {
-            alert('올바른 구글 시트 URL이 아닙니다.');
+        const response = await fetch(API_ENDPOINT);
+
+        if (!response.ok) {
+            throw new Error(`API 요청 실패: ${response.status}`);
+        }
+
+        const jsonData = await response.json();
+
+        // 에러 응답 체크
+        if (jsonData.error || jsonData.useLocal) {
+            console.warn('API 에러:', jsonData.error || '알 수 없는 오류');
+            console.log('로컬 데이터로 전환합니다.');
+            await loadLocalData();
             return;
         }
 
-        const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-        const response = await fetch(apiUrl);
-        const text = await response.text();
-
         // Google Visualization API 응답 파싱
-        const jsonData = JSON.parse(text.substring(47, text.length - 2));
         const parsedData = parseGoogleSheetData(jsonData);
 
         cardsData = parsedData.cards;
@@ -94,10 +83,11 @@ async function handleLoadGoogleSheet() {
         populateCardSelects();
         createCategoryInputs();
 
-        alert('구글 시트 데이터를 성공적으로 불러왔습니다!');
+        console.log('API를 통해 데이터를 성공적으로 불러왔습니다!');
     } catch (error) {
-        console.error('구글 시트 로드 실패:', error);
-        alert('구글 시트를 불러오는데 실패했습니다. "웹에 게시" 설정을 확인해주세요.');
+        console.error('API 데이터 로드 실패:', error);
+        console.log('로컬 데이터로 전환합니다.');
+        await loadLocalData();
     }
 }
 
@@ -107,18 +97,87 @@ function extractSheetId(url) {
     return match ? match[1] : null;
 }
 
-// 구글 시트 데이터 파싱 (간단한 형식 가정)
+// 구글 시트 데이터 파싱
 function parseGoogleSheetData(data) {
-    // 실제 구글 시트 구조에 맞게 파싱 로직 구현
-    // 여기서는 기본 로컬 데이터를 반환
-    return {
-        cards: cardsData || [],
-        categories: categoriesData || []
-    };
+    try {
+        const rows = data.table.rows;
+        const cardsMap = new Map();
+        const categoriesSet = new Set();
+
+        // 첫 번째 행은 헤더이므로 건너뜀
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i].c;
+            if (!row || row.length < 9) continue;
+
+            const cardId = row[0]?.v || '';
+            const cardName = row[1]?.v || '';
+            const issuer = row[2]?.v || '';
+            const annualFee = parseInt(row[3]?.v) || 0;
+            const category = row[4]?.v || '';
+            const benefitType = row[5]?.v || 'point';
+            const rate = parseFloat(row[6]?.v) || 0;
+            const maxMonthly = parseInt(row[7]?.v) || 0;
+            const description = row[8]?.v || '';
+
+            // 카드 정보 추가/업데이트
+            if (!cardsMap.has(cardId)) {
+                cardsMap.set(cardId, {
+                    id: cardId,
+                    name: cardName,
+                    issuer: issuer,
+                    annualFee: annualFee,
+                    benefits: []
+                });
+            }
+
+            // 혜택 정보 추가
+            cardsMap.get(cardId).benefits.push({
+                category: category,
+                type: benefitType,
+                rate: rate,
+                maxMonthly: maxMonthly,
+                description: description
+            });
+
+            // 카테고리 추가
+            categoriesSet.add(category);
+        }
+
+        // 카테고리 아이콘 매핑
+        const categoryIcons = {
+            '식비': '🍴',
+            '쇼핑': '🛍️',
+            '카페': '☕',
+            '카페/디저트': '☕',
+            '교통': '🚗',
+            '교통/주유': '🚗',
+            '통신': '📱',
+            '편의점': '🏪'
+        };
+
+        const categories = Array.from(categoriesSet).map(cat => ({
+            id: cat,
+            name: cat,
+            icon: categoryIcons[cat] || '💰'
+        }));
+
+        return {
+            cards: Array.from(cardsMap.values()),
+            categories: categories
+        };
+    } catch (error) {
+        console.error('구글 시트 파싱 오류:', error);
+        throw new Error('구글 시트 데이터 형식이 올바르지 않습니다.');
+    }
 }
 
 // 카드 선택 옵션 채우기
 function populateCardSelects() {
+    if (!cardsData || cardsData.length === 0) {
+        console.error('카드 데이터가 없습니다.');
+        return;
+    }
+
     const options = cardsData.map(card =>
         `<option value="${card.id}">${card.name} (${card.issuer})</option>`
     ).join('');
@@ -129,6 +188,11 @@ function populateCardSelects() {
 
 // 카테고리 입력 필드 생성
 function createCategoryInputs() {
+    if (!categoriesData || categoriesData.length === 0) {
+        console.error('카테고리 데이터가 없습니다.');
+        return;
+    }
+
     categoryInputsContainer.innerHTML = categoriesData.map(category => `
         <div class="category-input">
             <label for="spending-${category.id}">
@@ -171,8 +235,23 @@ function handleSpendingInput(e) {
 // 카드 선택 처리
 function handleCardSelection(cardNumber) {
     const select = cardNumber === 1 ? card1Select : card2Select;
+    const otherSelect = cardNumber === 1 ? card2Select : card1Select;
     const infoDiv = cardNumber === 1 ? card1Info : card2Info;
     const cardId = select.value;
+
+    // 같은 카드 선택 방지
+    if (cardId && cardId === otherSelect.value) {
+        alert('같은 카드를 두 번 선택할 수 없습니다. 다른 카드를 선택해주세요.');
+        select.value = '';
+        if (cardNumber === 1) {
+            selectedCard1 = null;
+        } else {
+            selectedCard2 = null;
+        }
+        infoDiv.innerHTML = '';
+        updateCalculateButton();
+        return;
+    }
 
     if (cardNumber === 1) {
         selectedCard1 = cardsData.find(card => card.id === cardId);
