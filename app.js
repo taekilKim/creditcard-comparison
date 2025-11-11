@@ -30,11 +30,11 @@ function setupEventListeners() {
 
 // 데이터 초기화 (config.js 설정에 따라)
 async function initializeData() {
-    if (GOOGLE_SHEET_URL) {
-        // 구글 시트 URL이 설정되어 있으면 구글 시트에서 로드
-        await loadGoogleSheetData();
+    if (DATA_SOURCE === 'api') {
+        // API를 통해 구글 시트 데이터 로드 (보안 처리됨)
+        await loadDataFromAPI();
     } else {
-        // 없으면 로컬 데이터 사용
+        // 로컬 데이터 사용
         await loadLocalData();
     }
 }
@@ -54,26 +54,28 @@ async function loadLocalData() {
     }
 }
 
-// 구글 시트 로드
-async function loadGoogleSheetData() {
+// API를 통해 데이터 로드 (보안 처리됨)
+async function loadDataFromAPI() {
     try {
-        // 구글 시트 URL을 CSV/JSON으로 변환
-        // 예: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit#gid=0
-        // -> https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:json
+        console.log('API를 통해 데이터를 불러오는 중...');
 
-        const sheetId = extractSheetId(GOOGLE_SHEET_URL);
-        if (!sheetId) {
-            console.error('올바른 구글 시트 URL이 아닙니다. 로컬 데이터로 전환합니다.');
+        const response = await fetch(API_ENDPOINT);
+
+        if (!response.ok) {
+            throw new Error(`API 요청 실패: ${response.status}`);
+        }
+
+        const jsonData = await response.json();
+
+        // 에러 응답 체크
+        if (jsonData.error || jsonData.useLocal) {
+            console.warn('API 에러:', jsonData.error || '알 수 없는 오류');
+            console.log('로컬 데이터로 전환합니다.');
             await loadLocalData();
             return;
         }
 
-        const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
-        const response = await fetch(apiUrl);
-        const text = await response.text();
-
         // Google Visualization API 응답 파싱
-        const jsonData = JSON.parse(text.substring(47, text.length - 2));
         const parsedData = parseGoogleSheetData(jsonData);
 
         cardsData = parsedData.cards;
@@ -81,9 +83,9 @@ async function loadGoogleSheetData() {
         populateCardSelects();
         createCategoryInputs();
 
-        console.log('구글 시트 데이터를 성공적으로 불러왔습니다!');
+        console.log('API를 통해 데이터를 성공적으로 불러왔습니다!');
     } catch (error) {
-        console.error('구글 시트 로드 실패:', error);
+        console.error('API 데이터 로드 실패:', error);
         console.log('로컬 데이터로 전환합니다.');
         await loadLocalData();
     }

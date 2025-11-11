@@ -56,9 +56,9 @@ npx http-server
    - 각 카드의 총 혜택, 연회비, 실질 이득이 표시됩니다
    - 어떤 카드가 얼마나 더 유리한지 한눈에 확인할 수 있습니다
 
-## 🔧 구글 시트 연동 설정 (관리자용)
+## 🔧 구글 시트 연동 설정 (관리자용 - 보안 처리됨)
 
-카드 혜택 데이터를 구글 시트로 관리하면 코드 수정 없이 데이터를 쉽게 업데이트할 수 있습니다.
+카드 혜택 데이터를 구글 시트로 관리하면 코드 수정 없이 데이터를 쉽게 업데이트할 수 있습니다. Netlify Functions를 사용하여 구글 시트 URL을 안전하게 숨길 수 있습니다.
 
 ### 구글 시트 생성 및 설정
 
@@ -90,32 +90,70 @@ npx http-server
    - "게시" 버튼 클릭
    - 생성된 URL 복사
 
-5. **config.js 파일 수정**
-   - 프로젝트 폴더의 `config.js` 파일을 엽니다
-   - `GOOGLE_SHEET_URL` 변수에 복사한 URL을 입력합니다:
-   ```javascript
-   const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit';
-   ```
-   - 파일을 저장하고 웹사이트를 새로고침하면 구글 시트 데이터가 자동으로 로드됩니다
+### 보안 설정 (Netlify 사용 - 권장)
 
-6. **데이터 업데이트**
+5. **Netlify 배포 및 환경 변수 설정**
+
+   a. **Netlify에 배포**
+   - [Netlify](https://app.netlify.com) 접속 및 로그인
+   - "New site from Git" 클릭
+   - GitHub 저장소 연결
+   - 빌드 설정은 기본값 사용 (정적 사이트)
+   - "Deploy site" 클릭
+
+   b. **환경 변수 설정**
+   - Netlify 대시보드에서 배포된 사이트 선택
+   - Site settings > Environment variables 이동
+   - "Add a variable" 클릭
+   - 다음 환경 변수 추가:
+     - Key: `GOOGLE_SHEET_URL`
+     - Value: 복사한 구글 시트 URL
+   - "Save" 클릭
+
+   c. **config.js 파일 수정**
+   - 프로젝트의 `config.js` 파일을 엽니다
+   - `DATA_SOURCE`를 `'api'`로 변경:
+   ```javascript
+   const DATA_SOURCE = 'api';  // 'local'에서 'api'로 변경
+   ```
+   - 파일 저장 후 커밋 & 푸시
+   - Netlify가 자동으로 재배포합니다
+
+6. **보안 확인**
+   - 이제 구글 시트 URL은 Netlify 서버에만 저장됨
+   - 사용자가 개발자 도구로 확인해도 실제 URL은 보이지 않음
+   - API 엔드포인트(`/.netlify/functions/get-cards`)만 노출됨
+
+7. **데이터 업데이트**
    - 구글 시트에서 카드 정보를 수정하면
    - 웹사이트를 새로고침할 때 자동으로 최신 데이터가 반영됩니다
    - 코드 수정이나 재배포 불필요!
+
+### 간단한 설정 (보안 없음 - 비권장)
+
+보안이 필요 없다면 `config.js`에서 직접 설정할 수도 있습니다:
+```javascript
+// 주의: 이 방법은 구글 시트 URL이 외부에 노출됩니다
+const DATA_SOURCE = 'local';  // 로컬 데이터만 사용
+```
 
 ## 📁 파일 구조
 
 ```
 creditcard-comparison/
-├── index.html              # 메인 HTML 파일
-├── styles.css              # CSS 스타일시트
-├── app.js                  # JavaScript 로직
-├── config.js               # 구글 시트 URL 설정 파일
-├── cards-data.json         # 로컬 샘플 카드 데이터 (백업용)
-├── google-sheet-template.csv  # 구글 시트 템플릿
-├── netlify.toml           # Netlify 배포 설정
-├── README.md               # 프로젝트 설명서
-└── .gitignore             # Git 무시 파일 목록
+├── index.html                    # 메인 HTML 파일
+├── styles.css                    # CSS 스타일시트
+├── app.js                        # JavaScript 로직
+├── config.js                     # 데이터 소스 설정 파일
+├── cards-data.json               # 로컬 샘플 카드 데이터 (백업용)
+├── google-sheet-template.csv    # 구글 시트 템플릿
+├── netlify.toml                  # Netlify 배포 설정
+├── netlify/
+│   └── functions/
+│       └── get-cards.js          # 서버리스 함수 (구글 시트 프록시)
+├── .env.example                  # 환경 변수 예시
+├── .gitignore                    # Git 무시 파일 목록
+└── README.md                     # 프로젝트 설명서
 ```
 
 ## 💾 데이터 구조
@@ -149,6 +187,25 @@ creditcard-comparison/
     }
   ]
 }
+```
+
+## 🔐 보안 기능
+
+### 구글 시트 URL 보호
+
+이 프로젝트는 Netlify Functions를 사용하여 구글 시트 URL을 안전하게 숨깁니다:
+
+- **서버리스 프록시**: 구글 시트 URL은 Netlify 환경 변수에만 저장
+- **API 엔드포인트**: 프론트엔드는 `/.netlify/functions/get-cards` 엔드포인트만 호출
+- **외부 노출 차단**: 사용자가 개발자 도구로 확인해도 실제 구글 시트 URL은 보이지 않음
+- **자동 폴백**: API 로드 실패 시 자동으로 로컬 데이터 사용
+
+### 작동 방식
+
+```
+사용자 브라우저 → Netlify Function → Google Sheets → 데이터 반환
+                     ↓ (실패 시)
+                  로컬 JSON 데이터
 ```
 
 ## 🎨 커스터마이징
