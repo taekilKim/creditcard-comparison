@@ -252,10 +252,104 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* 로그인 화면 스타일 */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .login-box p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-error {
+            color: #ef4444;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- 로그인 화면 -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h2>🔐 관리자 인증</h2>
+            <p>관리자 비밀번호를 입력하세요</p>
+            <input
+                type="password"
+                id="passwordInput"
+                class="login-input"
+                placeholder="비밀번호 입력"
+                onkeypress="if(event.key==='Enter') checkPassword()"
+            >
+            <button class="login-btn" onclick="checkPassword()">로그인</button>
+            <div id="loginError" class="login-error hidden"></div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
         <div class="header">
             <h1>🎴 신용카드 혜택 관리 도구</h1>
             <p>복잡한 카드 혜택을 쉽게 입력하고 표준화된 데이터로 변환하세요</p>
@@ -347,6 +441,55 @@
     </div>
 
     <script>
+        // 비밀번호 설정 (여기서 변경하세요!)
+        const ADMIN_PASSWORD = 'admin1234';  // 원하는 비밀번호로 변경하세요
+
+        // 비밀번호 체크 함수
+        function checkPassword() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('loginError');
+            const password = input.value;
+
+            if (password === ADMIN_PASSWORD) {
+                // 로그인 성공
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                // 세션 저장 (브라우저 닫으면 로그아웃)
+                sessionStorage.setItem('adminAuth', 'true');
+            } else {
+                // 로그인 실패
+                error.textContent = '❌ 비밀번호가 올바르지 않습니다.';
+                error.classList.remove('hidden');
+                input.value = '';
+                input.focus();
+
+                // 3초 후 에러 메시지 숨김
+                setTimeout(() => {
+                    error.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // 페이지 로드 시 인증 확인
+        window.addEventListener('DOMContentLoaded', () => {
+            const isAuthenticated = sessionStorage.getItem('adminAuth') === 'true';
+
+            if (isAuthenticated) {
+                // 이미 로그인되어 있으면 바로 표시
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+                // 샘플 혜택 추가
+                if (benefitCounter === 0) {
+                    initializeForm();
+                }
+            } else {
+                // 로그인 필요
+                document.getElementById('passwordInput').focus();
+            }
+        });
+
         let benefitCounter = 0;
         const categories = [
             { id: '식비', name: '식비', icon: '🍴' },
@@ -500,10 +643,40 @@
             }
         }
 
-        // 페이지 로드 시 샘플 혜택 하나 추가
-        window.addEventListener('DOMContentLoaded', () => {
+        // 인증 성공 후 샘플 혜택 추가
+        function initializeForm() {
             addBenefit();
-        });
+        }
+
+        // checkPassword 함수 수정하여 초기화 호출
+        const originalCheckPassword = checkPassword;
+        checkPassword = function() {
+            const input = document.getElementById('passwordInput');
+            const error = document.getElementById('loginError');
+            const password = input.value;
+
+            if (password === ADMIN_PASSWORD) {
+                // 로그인 성공
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                sessionStorage.setItem('adminAuth', 'true');
+
+                // 첫 로그인 시 샘플 혜택 추가
+                if (benefitCounter === 0) {
+                    initializeForm();
+                }
+            } else {
+                // 로그인 실패
+                error.textContent = '❌ 비밀번호가 올바르지 않습니다.';
+                error.classList.remove('hidden');
+                input.value = '';
+                input.focus();
+
+                setTimeout(() => {
+                    error.classList.add('hidden');
+                }, 3000);
+            }
+        };
     </script>
 </body>
 </html>
