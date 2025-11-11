@@ -1,7 +1,6 @@
 // Google Sheets API를 통한 카드 데이터 관리
 // 추가, 수정, 삭제 기능 제공
-
-const fetch = require('node-fetch');
+// Node.js 18+ 내장 fetch 사용
 
 // CORS 헤더
 const headers = {
