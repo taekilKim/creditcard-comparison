@@ -122,15 +122,26 @@ async function loadDataFromAPI() {
             return;
         }
 
-        // Google Visualization API 응답 파싱
-        const parsedData = parseGoogleSheetData(jsonData);
+        // manage-cards는 이미 파싱된 데이터를 반환하므로 바로 사용
+        // (get-cards와 달리 Google Visualization API 파싱 불필요)
+        if (jsonData.cards && jsonData.categories) {
+            // manage-cards에서 온 데이터 (이미 파싱됨)
+            cardsData = jsonData.cards;
+            categoriesData = jsonData.categories;
+        } else if (jsonData.table) {
+            // get-cards에서 온 데이터 (Google Visualization API 형식)
+            const parsedData = parseGoogleSheetData(jsonData);
+            cardsData = parsedData.cards;
+            categoriesData = parsedData.categories;
+        } else {
+            throw new Error('알 수 없는 데이터 형식입니다.');
+        }
 
-        cardsData = parsedData.cards;
-        categoriesData = parsedData.categories;
         populateCardSelects();
         createCategoryInputs();
 
         console.log('API를 통해 데이터를 성공적으로 불러왔습니다!');
+        console.log(`총 ${cardsData.length}개의 카드를 불러왔습니다.`);
     } catch (error) {
         console.error('API 데이터 로드 실패:', error);
         console.log('로컬 데이터로 전환합니다.');

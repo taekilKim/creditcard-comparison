@@ -4,5 +4,5 @@
 const DATA_SOURCE = 'api';
 
 // Netlify Function 엔드포인트
-// 배포 후에는 자동으로 /.netlify/functions/get-cards 경로로 접근 가능
-const API_ENDPOINT = '/.netlify/functions/get-cards';
+// manage-cards는 Service Account 인증을 사용하여 비공개 시트에 접근 가능
+const API_ENDPOINT = '/.netlify/functions/manage-cards';
