@@ -348,6 +348,30 @@
             width: auto;
         }
 
+        .brand-tag {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 3px;
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .brand-tag:hover {
+            background: #90caf9;
+            color: white;
+        }
+
+        .affiliate-suggestions {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -475,6 +499,22 @@
             { id: '뷰티', name: '뷰티/미용', icon: '💅' }
         ];
 
+        // 카테고리별 주요 브랜드
+        const categoryBrands = {
+            '카페': ['스타벅스', '이디야', '투썸플레이스', '커피빈', '할리스', '빽다방', '메가커피', '컴포즈커피'],
+            '편의점': ['GS25', 'CU', '세븐일레븐', '이마트24', '미니스톱'],
+            '배달': ['배달의민족', '쿠팡이츠', '요기요'],
+            '온라인쇼핑': ['쿠팡', '11번가', 'G마켓', '옥션', '인터파크', 'SSG닷컴', '네이버쇼핑'],
+            'OTT': ['넷플릭스', '웨이브', '왓챠', '디즈니플러스', '티빙', '쿠팡플레이'],
+            '교통': ['지하철', '버스', 'KTX', 'SRT', '택시', 'SK에너지', 'GS칼텍스', 'S-OIL', '현대오일뱅크'],
+            '통신': ['SKT', 'KT', 'LG유플러스'],
+            '식비': ['외식', '배달', '음식점'],
+            '쇼핑': ['백화점', '아울렛', '대형마트'],
+            '영화': ['CGV', '롯데시네마', '메가박스'],
+            '병원': ['병원', '약국', '의원'],
+            '뷰티': ['올리브영', '랄라블라', '뷰티플렉스', '미용실']
+        };
+
         // 로그인 체크
         function checkPassword() {
             const input = document.getElementById('passwordInput');
@@ -588,9 +628,26 @@
 
                     <div class="form-group">
                         <label>혜택 카테고리</label>
-                        <select class="benefit-category">
+                        <select class="benefit-category" onchange="updateAffiliateOptions(${benefitCounter})">
                             ${categories.map(cat => `<option value="${cat.id}">${cat.icon} ${cat.name}</option>`).join('')}
                         </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>제휴처 범위 *</label>
+                        <select class="benefit-scope" onchange="toggleAffiliateInput(${benefitCounter})">
+                            <option value="all">전체 (카테고리 내 모든 가맹점)</option>
+                            <option value="major">주요 프랜차이즈만</option>
+                            <option value="specific">특정 브랜드만 (직접 입력)</option>
+                        </select>
+                        <p class="help-text">사용자가 어느 매장에서 혜택을 받을 수 있는지 명확히 설정하세요</p>
+                    </div>
+
+                    <div class="form-group affiliate-input" id="affiliateInput-${benefitCounter}" style="display:none;">
+                        <label>제휴 브랜드</label>
+                        <input type="text" class="benefit-affiliates" placeholder="예: 스타벅스,이디야,투썸플레이스">
+                        <p class="help-text">쉼표(,)로 구분하여 입력하세요</p>
+                        <div id="affiliateSuggestions-${benefitCounter}" class="affiliate-suggestions"></div>
                     </div>
 
                     <div class="form-grid">
@@ -602,8 +659,8 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>설명</label>
-                            <input type="text" class="benefit-description" placeholder="예: 스타벅스 20% 할인">
+                            <label>설명 (자동 생성됨)</label>
+                            <input type="text" class="benefit-description" placeholder="자동으로 생성됩니다" readonly>
                         </div>
                     </div>
 
@@ -695,6 +752,84 @@
             document.getElementById(`tier-${benefitId}-${tierId}`).remove();
         }
 
+        // 제휴처 입력 토글
+        function toggleAffiliateInput(benefitId) {
+            const benefitItem = document.getElementById(`benefit-${benefitId}`);
+            const scope = benefitItem.querySelector('.benefit-scope').value;
+            const affiliateInput = document.getElementById(`affiliateInput-${benefitId}`);
+
+            if (scope === 'specific') {
+                affiliateInput.style.display = 'block';
+            } else {
+                affiliateInput.style.display = 'none';
+            }
+
+            updateDescription(benefitId);
+        }
+
+        // 카테고리 변경 시 제휴처 제안 업데이트
+        function updateAffiliateOptions(benefitId) {
+            const benefitItem = document.getElementById(`benefit-${benefitId}`);
+            const category = benefitItem.querySelector('.benefit-category').value;
+            const suggestionsDiv = document.getElementById(`affiliateSuggestions-${benefitId}`);
+
+            const brands = categoryBrands[category] || [];
+            if (brands.length > 0) {
+                suggestionsDiv.innerHTML = `
+                    <div style="margin-top: 10px;">
+                        <strong>추천 브랜드:</strong><br>
+                        ${brands.map(brand => `<span class="brand-tag" onclick="addBrandToInput(${benefitId}, '${brand}')">${brand}</span>`).join(' ')}
+                    </div>
+                `;
+            } else {
+                suggestionsDiv.innerHTML = '';
+            }
+
+            updateDescription(benefitId);
+        }
+
+        // 브랜드 태그 클릭 시 입력란에 추가
+        function addBrandToInput(benefitId, brand) {
+            const benefitItem = document.getElementById(`benefit-${benefitId}`);
+            const input = benefitItem.querySelector('.benefit-affiliates');
+            const current = input.value.trim();
+
+            if (current) {
+                const brands = current.split(',').map(b => b.trim());
+                if (!brands.includes(brand)) {
+                    input.value = current + ',' + brand;
+                }
+            } else {
+                input.value = brand;
+            }
+
+            updateDescription(benefitId);
+        }
+
+        // 설명 자동 생성
+        function updateDescription(benefitId) {
+            const benefitItem = document.getElementById(`benefit-${benefitId}`);
+            const category = benefitItem.querySelector('.benefit-category').value;
+            const scope = benefitItem.querySelector('.benefit-scope').value;
+            const affiliates = benefitItem.querySelector('.benefit-affiliates')?.value || '';
+            const type = benefitItem.querySelector('.benefit-type').value;
+            const descInput = benefitItem.querySelector('.benefit-description');
+
+            let description = '';
+
+            if (scope === 'all') {
+                const categoryName = categories.find(c => c.id === category)?.name || category;
+                description = `전체 ${categoryName}`;
+            } else if (scope === 'major') {
+                const categoryName = categories.find(c => c.id === category)?.name || category;
+                description = `주요 ${categoryName} 프랜차이즈`;
+            } else if (scope === 'specific' && affiliates) {
+                description = affiliates.replace(/,/g, '·');
+            }
+
+            descInput.value = description;
+        }
+
         // 카드 저장
         async function saveCard() {
             const cardName = document.getElementById('cardName').value;
@@ -724,7 +859,19 @@
                 const category = item.querySelector('.benefit-category').value;
                 const type = item.querySelector('.benefit-type').value;
                 const description = item.querySelector('.benefit-description').value;
+                const scope = item.querySelector('.benefit-scope').value;
+                const affiliates = item.querySelector('.benefit-affiliates')?.value || '';
                 const useTiers = item.querySelector('.use-tiers').checked;
+
+                // 제휴처 정보 처리
+                let affiliateList = '';
+                if (scope === 'specific' && affiliates) {
+                    affiliateList = affiliates.trim();
+                } else if (scope === 'all') {
+                    affiliateList = 'ALL';
+                } else if (scope === 'major') {
+                    affiliateList = 'MAJOR';
+                }
 
                 if (useTiers) {
                     // 구간별 혜택
@@ -735,12 +882,12 @@
                         const maxMonthly = parseInt(tierItem.querySelector('.tier-max').value) || 0;
                         tiers.push({ minPreviousMonth, rate, maxMonthly });
                     });
-                    benefits.push({ category, type, description, tiers });
+                    benefits.push({ category, type, description, scope, affiliates: affiliateList, tiers });
                 } else {
                     // 단일 혜택
                     const rate = parseFloat(item.querySelector('.benefit-rate').value) || 0;
                     const maxMonthly = parseInt(item.querySelector('.benefit-max').value) || 0;
-                    benefits.push({ category, type, rate, maxMonthly, description });
+                    benefits.push({ category, type, rate, maxMonthly, description, scope, affiliates: affiliateList });
                 }
             });
 
@@ -871,6 +1018,15 @@
                 item.querySelector('.benefit-category').value = benefit.category;
                 item.querySelector('.benefit-type').value = benefit.type;
                 item.querySelector('.benefit-description').value = benefit.description || '';
+
+                // 제휴처 정보 로드
+                if (benefit.scope) {
+                    item.querySelector('.benefit-scope').value = benefit.scope;
+                    toggleAffiliateInput(benefitCounter);
+                }
+                if (benefit.affiliates && benefit.affiliates !== 'ALL' && benefit.affiliates !== 'MAJOR') {
+                    item.querySelector('.benefit-affiliates').value = benefit.affiliates;
+                }
 
                 if (benefit.tiers && benefit.tiers.length > 0) {
                     // 구간별 혜택
