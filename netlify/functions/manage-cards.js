@@ -147,9 +147,28 @@ async function getAccessToken(credentials) {
   return tokenData.access_token;
 }
 
+// 첫 번째 시트 이름 가져오기 (자동 감지)
+async function getFirstSheetName(spreadsheetId, token) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
+  const response = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+
+  const data = await response.json();
+
+  if (!data.sheets || data.sheets.length === 0) {
+    throw new Error('스프레드시트에 시트가 없습니다.');
+  }
+
+  // 첫 번째 시트의 이름 반환 (한국어 "시트1" 또는 영어 "Sheet1" 등)
+  return data.sheets[0].properties.title;
+}
+
 // 카드 목록 조회
 async function getCards(spreadsheetId, token) {
-  const range = 'Sheet1!A:M'; // 13개 컬럼 (12개 데이터 + 헤더)
+  // 첫 번째 시트 이름 자동 감지
+  const sheetName = await getFirstSheetName(spreadsheetId, token);
+  const range = `${sheetName}!A:M`; // 13개 컬럼 (12개 데이터 + 헤더)
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
 
   const response = await fetch(url, {
@@ -258,7 +277,9 @@ async function addCard(spreadsheetId, token, cardData) {
   // 카드 데이터를 시트 행으로 변환
   const rows = cardToRows(cardData);
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A:M:append?valueInputOption=RAW`;
+  // 첫 번째 시트 이름 자동 감지
+  const sheetName = await getFirstSheetName(spreadsheetId, token);
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A:M:append?valueInputOption=RAW`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -295,8 +316,17 @@ async function updateCard(spreadsheetId, token, { cardId, cardData }) {
 
 // 카드 삭제
 async function deleteCard(spreadsheetId, token, { cardId }) {
-  // 1. 전체 데이터 조회
-  const range = 'Sheet1!A:M';
+  // 1. 첫 번째 시트 이름 및 ID 가져오기
+  const metadataUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`;
+  const metadataResponse = await fetch(metadataUrl, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const metadata = await metadataResponse.json();
+  const sheetName = metadata.sheets[0].properties.title;
+  const sheetId = metadata.sheets[0].properties.sheetId;
+
+  // 2. 전체 데이터 조회
+  const range = `${sheetName}!A:M`;
   const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
 
   const getResponse = await fetch(getUrl, {
@@ -313,7 +343,7 @@ async function deleteCard(spreadsheetId, token, { cardId }) {
     };
   }
 
-  // 2. 삭제할 행 찾기
+  // 3. 삭제할 행 찾기
   const rowsToDelete = [];
   for (let i = 1; i < data.values.length; i++) {
     if (data.values[i][0] === cardId) {
@@ -329,7 +359,7 @@ async function deleteCard(spreadsheetId, token, { cardId }) {
     };
   }
 
-  // 3. 행 삭제 (역순으로 삭제해야 인덱스가 안 꼬임)
+  // 4. 행 삭제 (역순으로 삭제해야 인덱스가 안 꼬임)
   for (let i = rowsToDelete.length - 1; i >= 0; i--) {
     const rowIndex = rowsToDelete[i];
     const deleteUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
@@ -344,7 +374,7 @@ async function deleteCard(spreadsheetId, token, { cardId }) {
         requests: [{
           deleteDimension: {
             range: {
-              sheetId: 0,
+              sheetId: sheetId, // 동적으로 가져온 sheetId 사용
               dimension: 'ROWS',
               startIndex: rowIndex - 1,
               endIndex: rowIndex
