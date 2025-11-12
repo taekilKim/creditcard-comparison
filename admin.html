@@ -911,10 +911,22 @@
                     body: JSON.stringify(body)
                 });
 
-                const result = await response.json();
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    console.error('응답 파싱 오류:', e);
+                    throw new Error(`서버 응답 파싱 실패 (상태 ${response.status})`);
+                }
+
+                console.log('서버 응답:', result);
 
                 if (!response.ok) {
-                    throw new Error(result.error || '저장 실패');
+                    const errorMsg = result.error || '저장 실패';
+                    const errorDetails = result.details ? `\n상세: ${result.details}` : '';
+                    const errorHint = result.hint ? `\n힌트: ${result.hint}` : '';
+                    const errorNote = result.note ? `\n참고: ${result.note}` : '';
+                    throw new Error(errorMsg + errorDetails + errorHint + errorNote);
                 }
 
                 alert('✅ 카드가 구글 시트에 저장되었습니다!');
@@ -922,8 +934,8 @@
                 editingCardId = null;
                 loadCardList(); // 목록 새로고침
             } catch (error) {
-                console.error('저장 오류:', error);
-                alert('❌ 저장 실패: ' + error.message + '\n\n구글 시트 설정을 확인하세요.');
+                console.error('저장 오류 전체:', error);
+                alert('❌ 저장 실패\n\n' + error.message + '\n\n콘솔(F12)에서 자세한 내용을 확인하세요.');
             }
         }
 
