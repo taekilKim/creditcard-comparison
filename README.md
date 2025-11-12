@@ -50,8 +50,8 @@
 
 ```bash
 # 저장소 클론
-git clone https://github.com/taekilKim/kbalda-namecard-generator.git
-cd kbalda-namecard-generator
+git clone https://github.com/taekilKim/creditcard-comparison.git
+cd creditcard-comparison
 
 # 로컬 서버 실행 (Python 3)
 python -m http.server 8000
@@ -495,8 +495,8 @@ MIT License
 
 ## 🔗 링크
 
-- [GitHub Repository](https://github.com/taekilKim/kbalda-namecard-generator)
-- [Live Demo](https://taekilkim.github.io/kbalda-namecard-generator)
+- [GitHub Repository](https://github.com/taekilKim/creditcard-comparison)
+- [Live Demo](https://taekilkim.github.io/creditcard-comparison)
 
 ## 📧 문의
 
