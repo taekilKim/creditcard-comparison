@@ -149,7 +149,7 @@ async function getAccessToken(credentials) {
 
 // 카드 목록 조회
 async function getCards(spreadsheetId, token) {
-  const range = 'Sheet1!A:K'; // 11개 컬럼
+  const range = 'Sheet1!A:M'; // 13개 컬럼 (12개 데이터 + 헤더)
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
 
   const response = await fetch(url, {
@@ -196,7 +196,9 @@ function parseSheetData(rows) {
     const benefitType = row[7] || 'point';
     const rate = parseFloat(row[8]) || 0;
     const maxMonthly = parseInt(row[9]) || 0;
-    const description = row[10] || '';
+    const scope = row[10] || 'all';
+    const affiliates = row[11] || 'ALL';
+    const description = row[12] || '';
 
     if (!cardsMap.has(cardId)) {
       cardsMap.set(cardId, {
@@ -225,6 +227,8 @@ function parseSheetData(rows) {
         type: benefitType,
         rate,
         maxMonthly,
+        scope,
+        affiliates,
         description
       });
       categoriesSet.add(category);
@@ -254,7 +258,7 @@ async function addCard(spreadsheetId, token, cardData) {
   // 카드 데이터를 시트 행으로 변환
   const rows = cardToRows(cardData);
 
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A:K:append?valueInputOption=RAW`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Sheet1!A:M:append?valueInputOption=RAW`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -292,7 +296,7 @@ async function updateCard(spreadsheetId, token, { cardId, cardData }) {
 // 카드 삭제
 async function deleteCard(spreadsheetId, token, { cardId }) {
   // 1. 전체 데이터 조회
-  const range = 'Sheet1!A:K';
+  const range = 'Sheet1!A:M';
   const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
 
   const getResponse = await fetch(getUrl, {
@@ -362,7 +366,7 @@ async function deleteCard(spreadsheetId, token, { cardId }) {
 function cardToRows(cardData) {
   const rows = [];
 
-  // 카드ID,카드명,발급사,연회비타입,연회비브랜드,연회비,카테고리,혜택타입,할인율,월최대한도,설명
+  // 12개 컬럼: 카드ID,카드명,발급사,연회비타입,연회비브랜드,연회비,카테고리,혜택타입,할인율,월최대한도,제휴처범위,제휴처,설명
 
   // 연회비 옵션과 혜택을 조합하여 행 생성
   const feeOptions = cardData.annualFee?.options || [{ type: '국내전용', brand: null, fee: 0 }];
@@ -382,6 +386,8 @@ function cardToRows(cardData) {
         '',
         '',
         '',
+        '',
+        '',
         ''
       ]);
     });
@@ -392,6 +398,8 @@ function cardToRows(cardData) {
         // tiers가 있는 경우 각 구간을 별도 행으로 (간단히 하기 위해 일단 단일 혜택만 지원)
         const rate = benefit.rate || 0;
         const maxMonthly = benefit.maxMonthly || 0;
+        const scope = benefit.scope || 'all';
+        const affiliates = benefit.affiliates || 'ALL';
 
         rows.push([
           cardData.id,
@@ -404,6 +412,8 @@ function cardToRows(cardData) {
           benefit.type,
           rate,
           maxMonthly,
+          scope,
+          affiliates,
           benefit.description || ''
         ]);
       });
