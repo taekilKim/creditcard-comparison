@@ -219,7 +219,24 @@ function parseSheetData(rows) {
     const affiliates = row[11] || 'ALL';
     const description = row[12] || '';
     const limitGroupId = row[13] || null; // 공통 한도 그룹 ID
-    const groupLimitMonthly = parseInt(row[14]) || null; // 그룹 월간 한도
+
+    // 그룹 월간 한도 파싱 (단일 숫자 또는 JSON 배열)
+    let groupLimitMonthly = null;
+    if (row[14]) {
+      try {
+        // JSON 배열 시도
+        const parsed = JSON.parse(row[14]);
+        if (Array.isArray(parsed)) {
+          groupLimitMonthly = parsed; // 구간별 한도
+        } else {
+          groupLimitMonthly = parseInt(row[14]) || null; // 단일 한도
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 숫자로 파싱
+        groupLimitMonthly = parseInt(row[14]) || null;
+      }
+    }
+
     const cardImage = row[15] || null; // 카드 이미지 URL
 
     if (!cardsMap.has(cardId)) {
@@ -252,10 +269,19 @@ function parseSheetData(rows) {
     // 공통 한도 그룹 정보 저장
     if (limitGroupId && groupLimitMonthly) {
       if (!card.limitGroups[limitGroupId]) {
-        card.limitGroups[limitGroupId] = {
-          maxMonthly: groupLimitMonthly,
-          benefits: []
-        };
+        if (Array.isArray(groupLimitMonthly)) {
+          // 구간별 그룹 한도
+          card.limitGroups[limitGroupId] = {
+            tiers: groupLimitMonthly,
+            benefits: []
+          };
+        } else {
+          // 단일 그룹 한도
+          card.limitGroups[limitGroupId] = {
+            maxMonthly: groupLimitMonthly,
+            benefits: []
+          };
+        }
       }
     }
 
@@ -467,7 +493,14 @@ function cardToRows(cardData) {
         // 공통 한도 그룹이 있으면 해당 그룹의 월 한도 가져오기
         let groupLimitMonthly = '';
         if (limitGroupId && cardData.limitGroups && cardData.limitGroups[limitGroupId]) {
-          groupLimitMonthly = cardData.limitGroups[limitGroupId].maxMonthly || '';
+          const groupInfo = cardData.limitGroups[limitGroupId];
+          if (groupInfo.tiers && Array.isArray(groupInfo.tiers)) {
+            // 구간별 그룹 한도: JSON 문자열로 저장
+            groupLimitMonthly = JSON.stringify(groupInfo.tiers);
+          } else if (groupInfo.maxMonthly) {
+            // 단일 그룹 한도
+            groupLimitMonthly = groupInfo.maxMonthly;
+          }
         }
 
         rows.push([
