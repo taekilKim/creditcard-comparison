@@ -520,6 +520,127 @@ section h2 {
     font-family: 'Inter', monospace;
 }
 
+/* About Section (SEO Content) */
+.about-section {
+    background: #ffffff;
+    padding: var(--space-48) var(--space-32);
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-64);
+}
+
+.about-section h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: var(--space-24);
+    color: var(--vercel-fg);
+    letter-spacing: -0.04em;
+}
+
+.about-content p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--vercel-gray);
+    margin-bottom: var(--space-16);
+}
+
+.about-content strong {
+    color: var(--vercel-fg);
+    font-weight: 600;
+}
+
+/* Guide Section (SEO Content) */
+.guide-section {
+    background: #ffffff;
+    padding: var(--space-48) var(--space-32);
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-64);
+}
+
+.guide-section h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: var(--space-32);
+    color: var(--vercel-fg);
+    letter-spacing: -0.04em;
+}
+
+.guide-steps {
+    display: grid;
+    gap: var(--space-24);
+}
+
+.guide-step {
+    padding: var(--space-24);
+    background: var(--vercel-lightest-gray);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+
+.guide-step h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--vercel-fg);
+    margin-bottom: var(--space-12);
+    letter-spacing: -0.02em;
+}
+
+.guide-step p {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--vercel-gray);
+}
+
+/* FAQ Section (AEO Optimization) */
+.faq-section {
+    background: #ffffff;
+    padding: var(--space-48) var(--space-32);
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--space-64);
+}
+
+.faq-section h2 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: var(--space-32);
+    color: var(--vercel-fg);
+    letter-spacing: -0.04em;
+}
+
+.faq-list {
+    display: grid;
+    gap: var(--space-24);
+}
+
+.faq-item {
+    padding: var(--space-24);
+    background: var(--vercel-lightest-gray);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.faq-item:hover {
+    box-shadow: var(--shadow-small);
+    border-color: var(--vercel-gray);
+}
+
+.faq-item h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--vercel-fg);
+    margin-bottom: var(--space-12);
+    letter-spacing: -0.02em;
+}
+
+.faq-item p {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--vercel-gray);
+}
+
 /* Footer - Vercel Subtle */
 footer {
     text-align: center;
@@ -589,6 +710,31 @@ footer {
     .result-card .total-benefit {
         font-size: 24px;
     }
+
+    /* SEO Content Sections - Mobile */
+    .about-section,
+    .guide-section,
+    .faq-section {
+        padding: var(--space-32) var(--space-24);
+        margin-bottom: var(--space-48);
+    }
+
+    .about-section h2,
+    .guide-section h2,
+    .faq-section h2 {
+        font-size: 24px;
+    }
+
+    .guide-step h3,
+    .faq-item h3 {
+        font-size: 16px;
+    }
+
+    .about-content p,
+    .guide-step p,
+    .faq-item p {
+        font-size: 14px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -610,5 +756,18 @@ footer {
 
     .winner {
         font-size: 28px;
+    }
+
+    /* SEO Content Sections - Small Mobile */
+    .about-section,
+    .guide-section,
+    .faq-section {
+        padding: var(--space-24) var(--space-16);
+    }
+
+    .about-section h2,
+    .guide-section h2,
+    .faq-section h2 {
+        font-size: 20px;
     }
 }
