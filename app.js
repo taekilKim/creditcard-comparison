@@ -651,13 +651,13 @@ function displayResults(result1, result2) {
     const difference = Math.abs(result1.netBenefit - result2.netBenefit);
 
     document.getElementById('resultSummary').innerHTML = `
-        <h3>🏆 최종 비교 결과</h3>
+        <h3>최종 비교 결과</h3>
         <div class="winner">${winner.card.name}</div>
         <div class="difference">
-            월 <span class="difference-amount">${Math.round(difference).toLocaleString()}원</span> 더 유리합니다!
+            월 <span class="difference-amount">${Math.round(difference).toLocaleString()}원</span> 더 유리합니다
         </div>
-        <p style="margin-top: 20px; color: var(--text-secondary);">
-            (연간 약 ${Math.round(difference * 12).toLocaleString()}원 차이)
+        <p style="margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
+            연간 약 ${Math.round(difference * 12).toLocaleString()}원 차이
         </p>
     `;
 
@@ -688,7 +688,7 @@ function createResultCardHTML(result) {
     }
 
     return `
-        <h3>💳 ${result.card.name}</h3>
+        <h3>${result.card.name}</h3>
         <div class="total-benefit">
             총 혜택: ${Math.round(result.totalBenefit).toLocaleString()}원
         </div>
@@ -699,10 +699,10 @@ function createResultCardHTML(result) {
             실질 이득: ${Math.round(result.netBenefit).toLocaleString()}원/월
         </div>
         <div class="benefit-breakdown">
-            <h4>📊 카테고리별 혜택</h4>
+            <h4>카테고리별 혜택</h4>
             ${breakdownHtml || '<p style="color: #999;">혜택 내역 없음</p>'}
         </div>
-        <p style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+        <p style="margin-top: 15px; text-align: center; color: var(--text-secondary); font-size: 14px;">
             연간 약 ${Math.round(result.netBenefit * 12).toLocaleString()}원
         </p>
     `;
