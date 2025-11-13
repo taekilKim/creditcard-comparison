@@ -607,6 +607,7 @@
         let benefitCounter = 0;
         let annualFeeCounter = 0;
         let tierCounters = {}; // benefitId -> tierCounter
+        let groupTierCounters = {}; // benefitId -> groupTierCounter
         let editingCardId = null;
         let allCardsData = { cards: [], categories: [] }; // API에서 로드한 전체 데이터
 
@@ -827,6 +828,7 @@
         function addBenefit() {
             benefitCounter++;
             tierCounters[benefitCounter] = 0;
+            groupTierCounters[benefitCounter] = 0;
 
             const html = `
                 <div class="benefit-item" id="benefit-${benefitCounter}">
@@ -873,17 +875,33 @@
                         </div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>공통한도 그룹 ID (선택)</label>
-                            <input type="text" class="limit-group-id" placeholder="예: GROUP_A">
-                            <p class="help-text">여러 혜택이 하나의 한도를 공유하려면 같은 ID 입력</p>
+                    <div class="form-group">
+                        <label>공통한도 그룹 ID (선택)</label>
+                        <input type="text" class="limit-group-id" placeholder="예: GROUP_A">
+                        <p class="help-text">여러 혜택이 하나의 한도를 공유하려면 같은 ID 입력</p>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" class="use-group-tiers" id="useGroupTiers-${benefitCounter}" onchange="toggleGroupTiers(${benefitCounter})">
+                            <label for="useGroupTiers-${benefitCounter}" style="margin: 0;">전월실적 구간별 그룹 한도 사용</label>
                         </div>
+                        <p class="help-text">체크하면 전월실적에 따라 다른 그룹 한도를 적용할 수 있습니다</p>
+                    </div>
+
+                    <!-- 단일 그룹 한도 (기본) -->
+                    <div id="singleGroupLimit-${benefitCounter}" class="single-group-limit">
                         <div class="form-group">
                             <label>그룹 월 최대 한도 (원)</label>
                             <input type="number" class="group-limit-monthly" placeholder="10000" step="1000">
                             <p class="help-text">공통한도 그룹의 월 최대 한도</p>
                         </div>
+                    </div>
+
+                    <!-- 구간별 그룹 한도 -->
+                    <div id="tieredGroupLimit-${benefitCounter}" class="tiered-group-limit hidden">
+                        <div id="groupTiersList-${benefitCounter}"></div>
+                        <button type="button" class="btn btn-primary" onclick="addGroupTier(${benefitCounter})">+ 그룹 한도 구간 추가</button>
                     </div>
 
                     <div class="form-group">
@@ -921,6 +939,7 @@
         function removeBenefit(id) {
             document.getElementById(`benefit-${id}`).remove();
             delete tierCounters[id];
+            delete groupTierCounters[id];
         }
 
         function toggleTiers(benefitId) {
@@ -972,6 +991,56 @@
 
         function removeTier(benefitId, tierId) {
             document.getElementById(`tier-${benefitId}-${tierId}`).remove();
+        }
+
+        // 구간별 그룹 한도 토글
+        function toggleGroupTiers(benefitId) {
+            const useGroupTiers = document.getElementById(`useGroupTiers-${benefitId}`).checked;
+            const singleGroupLimit = document.getElementById(`singleGroupLimit-${benefitId}`);
+            const tieredGroupLimit = document.getElementById(`tieredGroupLimit-${benefitId}`);
+
+            if (useGroupTiers) {
+                singleGroupLimit.classList.add('hidden');
+                tieredGroupLimit.classList.remove('hidden');
+                if (groupTierCounters[benefitId] === 0) {
+                    addGroupTier(benefitId);
+                }
+            } else {
+                singleGroupLimit.classList.remove('hidden');
+                tieredGroupLimit.classList.add('hidden');
+            }
+        }
+
+        // 그룹 한도 구간 추가
+        function addGroupTier(benefitId) {
+            groupTierCounters[benefitId]++;
+            const tierId = groupTierCounters[benefitId];
+
+            const html = `
+                <div class="group-tier-item" id="groupTier-${benefitId}-${tierId}">
+                    <div class="item-header">
+                        <div class="item-number" style="background: #9c27b0;">그룹 한도 구간 ${tierId}</div>
+                        <button class="remove-btn" onclick="removeGroupTier(${benefitId}, ${tierId})">삭제</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>전월실적 (원 이상)</label>
+                            <input type="number" class="group-tier-min" placeholder="300000" step="10000" value="0">
+                            <p class="help-text">이 금액 이상 사용 시 아래 그룹 한도 적용</p>
+                        </div>
+                        <div class="form-group">
+                            <label>그룹 월 최대 한도 (원)</label>
+                            <input type="number" class="group-tier-max" placeholder="10000" step="1000">
+                            <p class="help-text">이 구간의 공통 한도</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById(`groupTiersList-${benefitId}`).insertAdjacentHTML('beforeend', html);
+        }
+
+        function removeGroupTier(benefitId, tierId) {
+            document.getElementById(`groupTier-${benefitId}-${tierId}`).remove();
         }
 
         // 제휴처 입력 토글
@@ -1086,7 +1155,28 @@
                 const affiliates = item.querySelector('.benefit-affiliates')?.value || '';
                 const useTiers = item.querySelector('.use-tiers').checked;
                 const limitGroupId = item.querySelector('.limit-group-id')?.value || '';
-                const groupLimitMonthly = parseInt(item.querySelector('.group-limit-monthly')?.value) || 0;
+                const useGroupTiers = item.querySelector('.use-group-tiers')?.checked || false;
+
+                // 그룹 한도 수집 (단일 또는 구간별)
+                let groupLimitMonthly = null;
+                if (useGroupTiers) {
+                    // 구간별 그룹 한도
+                    const groupTiers = [];
+                    item.querySelectorAll('.group-tier-item').forEach(groupTierItem => {
+                        const minPreviousMonth = parseInt(groupTierItem.querySelector('.group-tier-min').value) || 0;
+                        const maxMonthly = parseInt(groupTierItem.querySelector('.group-tier-max').value) || 0;
+                        groupTiers.push({ minPreviousMonth, maxMonthly });
+                    });
+                    if (groupTiers.length > 0) {
+                        groupLimitMonthly = groupTiers;
+                    }
+                } else {
+                    // 단일 그룹 한도
+                    const singleLimit = parseInt(item.querySelector('.group-limit-monthly')?.value) || 0;
+                    if (singleLimit > 0) {
+                        groupLimitMonthly = singleLimit;
+                    }
+                }
 
                 // 제휴처 정보 처리
                 let affiliateList = '';
@@ -1185,6 +1275,7 @@
             benefitCounter = 0;
             annualFeeCounter = 0;
             tierCounters = {};
+            groupTierCounters = {};
             editingCardId = null;
             addAnnualFeeOption();
             addBenefit();
@@ -1301,7 +1392,21 @@
                     item.querySelector('.limit-group-id').value = benefit.limitGroupId;
                 }
                 if (benefit.groupLimitMonthly) {
-                    item.querySelector('.group-limit-monthly').value = benefit.groupLimitMonthly;
+                    if (Array.isArray(benefit.groupLimitMonthly)) {
+                        // 구간별 그룹 한도
+                        item.querySelector('.use-group-tiers').checked = true;
+                        toggleGroupTiers(benefitCounter);
+
+                        benefit.groupLimitMonthly.forEach(tier => {
+                            addGroupTier(benefitCounter);
+                            const groupTierItem = document.querySelector(`#groupTiersList-${benefitCounter} .group-tier-item:last-child`);
+                            groupTierItem.querySelector('.group-tier-min').value = tier.minPreviousMonth;
+                            groupTierItem.querySelector('.group-tier-max').value = tier.maxMonthly;
+                        });
+                    } else {
+                        // 단일 그룹 한도
+                        item.querySelector('.group-limit-monthly').value = benefit.groupLimitMonthly;
+                    }
                 }
             });
 

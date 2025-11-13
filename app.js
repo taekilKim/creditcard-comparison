@@ -629,7 +629,28 @@ function calculateCardBenefit(card, cardNumber) {
         // 그룹별로 혜택 집계
         Object.keys(card.limitGroups).forEach(groupId => {
             const groupInfo = card.limitGroups[groupId];
-            const groupLimit = groupInfo.maxMonthly;
+            let groupLimit = 0;
+
+            // 그룹 한도 결정 (구간별 또는 단일)
+            if (groupInfo.tiers && groupInfo.tiers.length > 0) {
+                // 전월실적 구간별 그룹 한도 - 가장 높은 구간 찾기
+                const sortedTiers = [...groupInfo.tiers].sort((a, b) => b.minPreviousMonth - a.minPreviousMonth);
+                for (const tier of sortedTiers) {
+                    if (previousMonthUsage >= tier.minPreviousMonth) {
+                        groupLimit = tier.maxMonthly;
+                        break;
+                    }
+                }
+                // 조건을 만족하는 구간이 없으면 그룹 한도 0 (적용 안 됨)
+                if (groupLimit === 0) {
+                    return;
+                }
+            } else if (groupInfo.maxMonthly) {
+                // 단일 그룹 한도
+                groupLimit = groupInfo.maxMonthly;
+            } else {
+                return; // 한도 정보 없음
+            }
 
             // 이 그룹에 속한 breakdown 항목들 찾기
             const groupBreakdownItems = breakdown.filter(item => item.limitGroupId === groupId);
