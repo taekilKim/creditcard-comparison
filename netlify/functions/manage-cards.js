@@ -168,7 +168,7 @@ async function getFirstSheetName(spreadsheetId, token) {
 async function getCards(spreadsheetId, token) {
   // 첫 번째 시트 이름 자동 감지
   const sheetName = await getFirstSheetName(spreadsheetId, token);
-  const range = `${sheetName}!A:M`; // 13개 컬럼 (12개 데이터 + 헤더)
+  const range = `${sheetName}!A:P`; // 16개 컬럼으로 확장 (공통한도 2개 + 이미지 1개)
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
 
   const response = await fetch(url, {
@@ -218,18 +218,28 @@ function parseSheetData(rows) {
     const scope = row[10] || 'all';
     const affiliates = row[11] || 'ALL';
     const description = row[12] || '';
+    const limitGroupId = row[13] || null; // 공통 한도 그룹 ID
+    const groupLimitMonthly = parseInt(row[14]) || null; // 그룹 월간 한도
+    const cardImage = row[15] || null; // 카드 이미지 URL
 
     if (!cardsMap.has(cardId)) {
       cardsMap.set(cardId, {
         id: cardId,
         name: cardName,
         issuer: issuer,
+        imageUrl: cardImage, // 카드 이미지 URL
         annualFee: { options: [] },
-        benefits: []
+        benefits: [],
+        limitGroups: {} // 공통 한도 그룹 정보
       });
     }
 
     const card = cardsMap.get(cardId);
+
+    // 카드 이미지가 있으면 업데이트 (같은 카드의 여러 혜택 행에서 이미지가 다를 수 있으므로)
+    if (cardImage && !card.imageUrl) {
+      card.imageUrl = cardImage;
+    }
 
     // 연회비 옵션 추가
     const existingFee = card.annualFee.options.find(
@@ -239,17 +249,36 @@ function parseSheetData(rows) {
       card.annualFee.options.push({ type: feeType, brand: feeBrand, fee: annualFee });
     }
 
+    // 공통 한도 그룹 정보 저장
+    if (limitGroupId && groupLimitMonthly) {
+      if (!card.limitGroups[limitGroupId]) {
+        card.limitGroups[limitGroupId] = {
+          maxMonthly: groupLimitMonthly,
+          benefits: []
+        };
+      }
+    }
+
     // 혜택 추가
     if (category) {
-      card.benefits.push({
+      const benefit = {
         category,
         type: benefitType,
         rate,
         maxMonthly,
         scope,
         affiliates,
-        description
-      });
+        description,
+        limitGroupId: limitGroupId || null // 공통 한도 그룹 ID 추가
+      };
+
+      card.benefits.push(benefit);
+
+      // 공통 한도 그룹에 혜택 ID 추가
+      if (limitGroupId && card.limitGroups[limitGroupId]) {
+        card.limitGroups[limitGroupId].benefits.push(card.benefits.length - 1);
+      }
+
       categoriesSet.add(category);
     }
   }
@@ -279,7 +308,7 @@ async function addCard(spreadsheetId, token, cardData) {
 
   // 첫 번째 시트 이름 자동 감지
   const sheetName = await getFirstSheetName(spreadsheetId, token);
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A:M:append?valueInputOption=RAW`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A:P:append?valueInputOption=RAW`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -326,7 +355,7 @@ async function deleteCard(spreadsheetId, token, { cardId }) {
   const sheetId = metadata.sheets[0].properties.sheetId;
 
   // 2. 전체 데이터 조회
-  const range = `${sheetName}!A:M`;
+  const range = `${sheetName}!A:P`;
   const getUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}`;
 
   const getResponse = await fetch(getUrl, {
@@ -396,11 +425,12 @@ async function deleteCard(spreadsheetId, token, { cardId }) {
 function cardToRows(cardData) {
   const rows = [];
 
-  // 12개 컬럼: 카드ID,카드명,발급사,연회비타입,연회비브랜드,연회비,카테고리,혜택타입,할인율,월최대한도,제휴처범위,제휴처,설명
+  // 16개 컬럼: 카드ID,카드명,발급사,연회비타입,연회비브랜드,연회비,카테고리,혜택타입,할인율,월최대한도,제휴처범위,제휴처,설명,공통한도그룹ID,그룹월한도,카드이미지
 
   // 연회비 옵션과 혜택을 조합하여 행 생성
   const feeOptions = cardData.annualFee?.options || [{ type: '국내전용', brand: null, fee: 0 }];
   const benefits = cardData.benefits || [];
+  const imageUrl = cardData.imageUrl || '';
 
   if (benefits.length === 0) {
     // 혜택이 없는 경우, 연회비만 있는 행 생성
@@ -412,24 +442,33 @@ function cardToRows(cardData) {
         fee.type,
         fee.brand || '',
         fee.fee,
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
-        ''
+        '', // category
+        '', // benefitType
+        '', // rate
+        '', // maxMonthly
+        '', // scope
+        '', // affiliates
+        '', // description
+        '', // limitGroupId
+        '', // groupLimitMonthly
+        imageUrl // cardImage
       ]);
     });
   } else {
     // 혜택이 있는 경우
     feeOptions.forEach(fee => {
       benefits.forEach(benefit => {
-        // tiers가 있는 경우 각 구간을 별도 행으로 (간단히 하기 위해 일단 단일 혜택만 지원)
         const rate = benefit.rate || 0;
         const maxMonthly = benefit.maxMonthly || 0;
         const scope = benefit.scope || 'all';
         const affiliates = benefit.affiliates || 'ALL';
+        const limitGroupId = benefit.limitGroupId || '';
+
+        // 공통 한도 그룹이 있으면 해당 그룹의 월 한도 가져오기
+        let groupLimitMonthly = '';
+        if (limitGroupId && cardData.limitGroups && cardData.limitGroups[limitGroupId]) {
+          groupLimitMonthly = cardData.limitGroups[limitGroupId].maxMonthly || '';
+        }
 
         rows.push([
           cardData.id,
@@ -444,7 +483,10 @@ function cardToRows(cardData) {
           maxMonthly,
           scope,
           affiliates,
-          benefit.description || ''
+          benefit.description || '',
+          limitGroupId,
+          groupLimitMonthly,
+          imageUrl
         ]);
       });
     });
