@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
@@ -5,44 +7,57 @@
 }
 
 :root {
-    /* Clean Modern Theme - Inspired by mobile design patterns */
-    --primary-color: #2563eb;
-    --primary-light: #3b82f6;
-    --accent-color: #06b6d4;
-    --success-color: #10b981;
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --bg-tertiary: #f3f4f6;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
-    --text-muted: #9ca3af;
-    --border-light: #f3f4f6;
-    --border-default: #e5e7eb;
-    --border-medium: #d1d5db;
+    /* Vercel-Inspired Color Palette */
+    --vercel-black: #000000;
+    --vercel-bg: #fafafa;
+    --vercel-fg: #000000;
+    --vercel-gray: #666666;
+    --vercel-light-gray: #999999;
+    --vercel-lighter-gray: #eaeaea;
+    --vercel-lightest-gray: #fafafa;
+    --vercel-accent-1: #0070f3;
+    --vercel-accent-2: #7928ca;
+    --vercel-accent-3: #ff0080;
+    --vercel-success: #0070f3;
+    --vercel-error: #ee0000;
 
-    /* Clean Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-    --shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-    --shadow-lg: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
-    --shadow-hover: 0 6px 20px 0 rgba(0, 0, 0, 0.1);
+    /* Gradients */
+    --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-vercel: linear-gradient(90deg, var(--vercel-accent-2) 0%, var(--vercel-accent-3) 100%);
 
-    /* Spacing - Clean & Organized */
-    --space-xs: 8px;
-    --space-sm: 12px;
-    --space-md: 16px;
-    --space-lg: 24px;
-    --space-xl: 32px;
-    --space-2xl: 40px;
+    /* Shadows - Vercel style (very subtle) */
+    --shadow-smallest: 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow-small: 0 5px 10px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.1);
+    --shadow-large: 0 30px 60px rgba(0, 0, 0, 0.12);
+
+    /* Borders */
+    --border-color: #eaeaea;
+    --border-radius: 8px;
+    --border-radius-large: 12px;
+
+    /* Spacing - Generous like Vercel */
+    --space-4: 4px;
+    --space-8: 8px;
+    --space-12: 12px;
+    --space-16: 16px;
+    --space-24: 24px;
+    --space-32: 32px;
+    --space-48: 48px;
+    --space-64: 64px;
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--vercel-bg);
+    color: var(--vercel-fg);
     line-height: 1.6;
-    padding: var(--space-md);
+    padding: var(--space-24);
     font-size: 14px;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .container {
@@ -50,55 +65,55 @@ body {
     margin: 0 auto;
 }
 
-/* Header - Clean & Centered */
+/* Header - Vercel Style */
 header {
     text-align: center;
-    margin-bottom: var(--space-lg);
-    padding: var(--space-lg) var(--space-md) var(--space-md);
-    background: var(--bg-primary);
-    border-radius: 0;
-    border: none;
+    margin-bottom: var(--space-64);
+    padding: var(--space-48) var(--space-16);
+    background: transparent;
 }
 
 header h1 {
-    font-size: 22px;
-    font-weight: 600;
-    margin-bottom: var(--space-sm);
-    color: var(--text-primary);
-    letter-spacing: -0.02em;
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: var(--space-16);
+    color: var(--vercel-fg);
+    letter-spacing: -0.05em;
+    background: var(--gradient-vercel);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
+    font-size: 20px;
+    color: var(--vercel-gray);
     font-weight: 400;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
-    line-height: 1.5;
+    line-height: 1.7;
 }
 
-/* Sections - Clean & Organized */
+/* Sections - Vercel Style */
 section {
-    background: var(--bg-primary);
-    padding: var(--space-lg) var(--space-md);
-    margin-bottom: var(--space-md);
-    border-radius: 16px;
+    background: transparent;
+    padding: 0;
+    margin-bottom: var(--space-64);
 }
 
 section h2 {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: var(--space-md);
-    color: var(--text-muted);
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: var(--space-32);
+    color: var(--vercel-fg);
+    letter-spacing: -0.04em;
 }
 
-/* Card Selection - Clean Grid */
+/* Card Selection - Vercel Cards */
 .card-selection-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: var(--space-32);
 }
 
 .card-selector {
@@ -106,88 +121,100 @@ section h2 {
 }
 
 .card-selector h3 {
-    margin-bottom: var(--space-sm);
-    color: var(--text-secondary);
+    margin-bottom: var(--space-12);
+    color: var(--vercel-gray);
     font-size: 14px;
     font-weight: 600;
-    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
 }
 
 .card-select {
     width: 100%;
-    padding: 12px 14px;
-    border: 1px solid var(--border-default);
-    border-radius: 12px;
-    font-size: 15px;
-    background: var(--bg-primary);
+    padding: 14px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    background: #ffffff;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--vercel-fg);
+    font-family: 'Inter', sans-serif;
 }
 
 .card-select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+    border-color: var(--vercel-accent-1);
+    box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
 }
 
 .card-select:hover {
-    border-color: var(--border-medium);
+    border-color: var(--vercel-gray);
+    box-shadow: var(--shadow-smallest);
 }
 
 .card-info {
-    margin-top: var(--space-md);
-    padding: var(--space-md);
-    background: var(--bg-tertiary);
-    border-radius: 12px;
-    border: none;
-    box-shadow: none;
-    min-height: 60px;
-    transition: all 0.2s ease;
+    margin-top: var(--space-16);
+    padding: var(--space-24);
+    background: #ffffff;
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-small);
+    min-height: 80px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-info:hover {
-    background: var(--border-light);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-2px);
 }
 
 .card-detail h4 {
-    font-size: 16px;
-    margin-bottom: var(--space-xs);
-    color: var(--text-primary);
-    font-weight: 600;
+    font-size: 20px;
+    margin-bottom: var(--space-12);
+    color: var(--vercel-fg);
+    font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
 .card-detail p {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin-bottom: 4px;
+    font-size: 16px;
+    color: var(--vercel-gray);
+    margin-bottom: var(--space-8);
+    line-height: 1.6;
 }
 
 .fee-select {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    font-size: 14px;
-    background: var(--bg-secondary);
-    margin-top: 6px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    background: #ffffff;
+    margin-top: var(--space-12);
     cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
 }
 
 .fee-select:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--vercel-accent-1);
+    box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.fee-select:hover {
+    border-color: var(--vercel-gray);
 }
 
 .benefit-item {
-    padding: 6px 0;
+    padding: var(--space-12) 0;
     background: transparent;
-    border-radius: 0;
-    margin-bottom: 3px;
-    font-size: 14px;
+    margin-bottom: 0;
+    font-size: 16px;
     border: none;
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .benefit-item:last-child {
@@ -196,33 +223,31 @@ section h2 {
 
 .benefit-category {
     font-weight: 600;
-    color: var(--text-primary);
-    margin-right: 6px;
+    color: var(--vercel-fg);
+    margin-right: var(--space-8);
 }
 
-/* Spending Section - Clean Grid */
+/* Spending Section - Vercel Grid */
 .category-inputs {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--space-24);
+    margin-bottom: var(--space-32);
 }
 
 .category-input {
     padding: 0;
     background: transparent;
-    border-radius: 0;
-    border: none;
     transition: all 0.2s ease;
 }
 
 .category-input label {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: var(--space-8);
+    margin-bottom: var(--space-8);
     font-weight: 500;
-    color: var(--text-secondary);
+    color: var(--vercel-gray);
     font-size: 14px;
 }
 
@@ -232,85 +257,110 @@ section h2 {
 
 .category-input input {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--border-default);
-    border-radius: 10px;
-    font-size: 15px;
-    background: var(--bg-secondary);
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: 16px;
+    background: #ffffff;
     font-weight: 500;
-    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .category-input input:focus {
     outline: none;
-    border-color: var(--primary-color);
-    background: var(--bg-primary);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+    border-color: var(--vercel-accent-1);
+    box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+}
+
+.category-input input:hover {
+    border-color: var(--vercel-gray);
 }
 
 .total-spending {
-    padding: var(--space-sm) 0;
+    padding: var(--space-24) 0;
     background: transparent;
-    border-radius: 0;
     text-align: right;
-    font-size: 14px;
+    font-size: 16px;
     border: none;
-    border-top: 2px solid var(--text-primary);
-    margin-top: var(--space-sm);
+    border-top: 2px solid var(--vercel-fg);
+    margin-top: var(--space-32);
 }
 
 .total-spending strong {
     display: inline;
-    margin-right: var(--space-xs);
-    color: var(--text-primary);
-    font-size: 14px;
+    margin-right: var(--space-12);
+    color: var(--vercel-fg);
+    font-size: 16px;
     font-weight: 600;
 }
 
 .total-spending span {
-    color: var(--primary-color);
+    color: var(--vercel-accent-1);
     font-weight: 700;
-    font-size: 18px;
-    letter-spacing: -0.01em;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    font-family: 'Inter', monospace;
 }
 
 /* Action Section */
 .action-section {
     text-align: center;
-    margin: var(--space-lg) 0;
+    margin: var(--space-64) 0;
 }
 
-/* Button - Clean & Modern */
+/* Button - Vercel Gradient Style */
 .btn-calculate {
-    padding: 14px 40px;
+    padding: 16px 48px;
     border: none;
-    border-radius: 12px;
+    border-radius: var(--border-radius);
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    background: var(--primary-color);
+    background: var(--vercel-fg);
     color: white;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
-    transition: all 0.2s ease;
+    box-shadow: var(--shadow-small);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     letter-spacing: -0.01em;
+    font-family: 'Inter', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-calculate::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-vercel);
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 .btn-calculate:hover:not(:disabled) {
-    background: var(--primary-light);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+
+.btn-calculate:hover:not(:disabled)::before {
+    opacity: 1;
+}
+
+.btn-calculate span {
+    position: relative;
+    z-index: 1;
 }
 
 .btn-calculate:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
 }
 
 .btn-calculate:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
     transform: none;
-    box-shadow: none;
 }
 
 /* Result Section */
@@ -331,70 +381,72 @@ section h2 {
 
 .result-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: var(--space-xl);
-    margin-bottom: var(--space-xl);
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: var(--space-32);
+    margin-bottom: var(--space-64);
 }
 
 .result-card {
-    padding: var(--space-xl);
-    background: var(--bg-primary);
-    border-radius: 16px;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-md);
-    transition: all 0.2s ease;
+    padding: var(--space-32);
+    background: #ffffff;
+    border-radius: var(--border-radius-large);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-small);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .result-card:hover {
-    box-shadow: var(--shadow-lg);
-    border-color: var(--border-default);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-4px);
 }
 
 .result-card h3 {
-    font-size: 19px;
-    margin-bottom: var(--space-md);
-    color: var(--text-primary);
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-size: 24px;
+    margin-bottom: var(--space-16);
+    color: var(--vercel-fg);
+    font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
 .result-card .total-benefit {
-    font-size: 22px;
+    font-size: 32px;
     font-weight: 700;
-    color: var(--success-color);
-    margin: var(--space-md) 0;
+    background: var(--gradient-vercel);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: var(--space-24) 0;
     text-align: center;
-    padding: var(--space-lg);
-    background: rgba(16, 185, 129, 0.06);
-    border-radius: 12px;
-    letter-spacing: -0.02em;
+    padding: var(--space-24);
+    background-color: var(--vercel-lightest-gray);
+    border-radius: var(--border-radius-large);
+    letter-spacing: -0.03em;
+    font-family: 'Inter', monospace;
 }
 
 .benefit-breakdown {
-    margin-top: var(--space-sm);
+    margin-top: var(--space-24);
 }
 
 .benefit-breakdown h4 {
     font-size: 14px;
-    margin-bottom: var(--space-xs);
-    color: var(--text-muted);
+    margin-bottom: var(--space-16);
+    color: var(--vercel-light-gray);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.1em;
 }
 
 .breakdown-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
+    padding: var(--space-12) 0;
     background: transparent;
-    border-radius: 0;
-    margin-bottom: 3px;
-    font-size: 14px;
+    margin-bottom: 0;
+    font-size: 16px;
     border: none;
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .breakdown-item:last-child {
@@ -403,71 +455,79 @@ section h2 {
 
 .breakdown-category {
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--vercel-fg);
 }
 
 .breakdown-amount {
-    color: var(--success-color);
+    color: var(--vercel-accent-1);
     font-weight: 600;
+    font-family: 'Inter', monospace;
 }
 
 .annual-fee {
-    margin-top: var(--space-sm);
-    padding: 10px 14px;
-    background: rgba(251, 191, 36, 0.1);
-    border-radius: 10px;
+    margin-top: var(--space-16);
+    padding: 12px 16px;
+    background: #fffbeb;
+    border-radius: var(--border-radius);
     text-align: center;
     font-size: 14px;
     color: #92400e;
-    border: 1px solid rgba(251, 191, 36, 0.2);
+    border: 1px solid #fde68a;
     font-weight: 500;
 }
 
-/* Result Summary - Clean Hero Section */
+/* Result Summary - Vercel Hero */
 .result-summary {
-    padding: var(--space-2xl) var(--space-xl);
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
-    border-radius: 16px;
+    padding: var(--space-48) var(--space-32);
+    background: #ffffff;
+    border-radius: var(--border-radius-large);
     text-align: center;
-    border: 1px solid var(--border-light);
-    box-shadow: none;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-small);
 }
 
 .result-summary h3 {
-    font-size: 13px;
-    margin-bottom: var(--space-md);
-    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: var(--space-24);
+    color: var(--vercel-light-gray);
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
 }
 
 .winner {
-    font-size: 24px;
+    font-size: 40px;
     font-weight: 700;
-    color: var(--primary-color);
-    margin: var(--space-md) 0;
-    letter-spacing: -0.02em;
+    background: var(--gradient-vercel);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: var(--space-16) 0;
+    letter-spacing: -0.04em;
 }
 
 .difference {
-    font-size: 16px;
-    color: var(--text-secondary);
+    font-size: 18px;
+    color: var(--vercel-gray);
     font-weight: 500;
+    margin-top: var(--space-16);
 }
 
 .difference-amount {
-    color: var(--success-color);
+    color: var(--vercel-accent-1);
     font-weight: 700;
-    font-size: 20px;
+    font-size: 24px;
+    font-family: 'Inter', monospace;
 }
 
-/* Footer - Subtle */
+/* Footer - Vercel Subtle */
 footer {
     text-align: center;
-    padding: var(--space-lg);
-    color: var(--text-muted);
+    padding: var(--space-48);
+    color: var(--vercel-light-gray);
     font-size: 14px;
+    margin-top: var(--space-64);
+    border-top: 1px solid var(--border-color);
 }
 
 /* Utility Classes */
@@ -475,61 +535,69 @@ footer {
     display: none !important;
 }
 
-/* Responsive Design */
+/* Responsive Design - Vercel Approach */
 @media (max-width: 768px) {
     body {
-        padding: var(--space-sm);
+        padding: var(--space-16);
     }
 
     header {
-        padding: var(--space-lg) var(--space-sm);
-        margin-bottom: var(--space-lg);
+        padding: var(--space-32) var(--space-16);
+        margin-bottom: var(--space-48);
     }
 
     header h1 {
-        font-size: 18px;
+        font-size: 32px;
     }
 
     .subtitle {
-        font-size: 14px;
+        font-size: 16px;
     }
 
     section {
-        margin-bottom: var(--space-lg);
+        margin-bottom: var(--space-48);
     }
 
     section h2 {
-        font-size: 16px;
+        font-size: 24px;
     }
 
     .card-selection-grid,
     .result-grid {
         grid-template-columns: 1fr;
-        gap: var(--space-md);
+        gap: var(--space-24);
     }
 
     .category-inputs {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: var(--space-xs);
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: var(--space-16);
     }
 
     .btn-calculate {
         width: 100%;
-        padding: 10px 24px;
+        padding: 14px 32px;
     }
 
     .result-summary {
-        padding: var(--space-md);
+        padding: var(--space-32) var(--space-24);
     }
 
     .winner {
-        font-size: 18px;
+        font-size: 32px;
+    }
+
+    .result-card .total-benefit {
+        font-size: 24px;
     }
 }
 
 @media (max-width: 480px) {
     header h1 {
-        font-size: 18px;
+        font-size: 28px;
+    }
+
+    section h2 {
+        font-size: 20px;
     }
 
     .category-inputs {
@@ -537,10 +605,10 @@ footer {
     }
 
     .total-spending span {
-        font-size: 16px;
+        font-size: 20px;
     }
 
-    .result-card .total-benefit {
-        font-size: 18px;
+    .winner {
+        font-size: 28px;
     }
 }
