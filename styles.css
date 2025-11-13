@@ -5,33 +5,34 @@
 }
 
 :root {
-    /* Modern Minimal Color Palette */
+    /* Clean Modern Theme - Inspired by mobile design patterns */
     --primary-color: #2563eb;
     --primary-light: #3b82f6;
     --accent-color: #06b6d4;
     --success-color: #10b981;
     --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-tertiary: #f1f5f9;
-    --text-primary: #0f172a;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
-    --border-light: #e2e8f0;
-    --border-default: #cbd5e1;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-muted: #9ca3af;
+    --border-light: #f3f4f6;
+    --border-default: #e5e7eb;
+    --border-medium: #d1d5db;
 
-    /* Subtle Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
-    --shadow-md: 0 2px 8px 0 rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.06);
-    --shadow-hover: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
+    /* Clean Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 4px 12px 0 rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 6px 20px 0 rgba(0, 0, 0, 0.1);
 
-    /* Spacing - Compact */
-    --space-xs: 6px;
+    /* Spacing - Clean & Organized */
+    --space-xs: 8px;
     --space-sm: 12px;
     --space-md: 16px;
-    --space-lg: 20px;
-    --space-xl: 24px;
-    --space-2xl: 32px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+    --space-2xl: 40px;
 }
 
 body {
@@ -49,20 +50,20 @@ body {
     margin: 0 auto;
 }
 
-/* Header - Minimal & Bold */
+/* Header - Clean & Centered */
 header {
     text-align: center;
-    margin-bottom: var(--space-xl);
-    padding: var(--space-xl) var(--space-md);
-    background: transparent;
+    margin-bottom: var(--space-lg);
+    padding: var(--space-lg) var(--space-md) var(--space-md);
+    background: var(--bg-primary);
     border-radius: 0;
     border: none;
 }
 
 header h1 {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: var(--space-xs);
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
     color: var(--text-primary);
     letter-spacing: -0.02em;
 }
@@ -73,24 +74,27 @@ header h1 {
     font-weight: 400;
     max-width: 600px;
     margin: 0 auto;
+    line-height: 1.5;
 }
 
-/* Sections - Open & Airy */
+/* Sections - Clean & Organized */
 section {
-    background: transparent;
-    padding: 0;
-    margin-bottom: var(--space-xl);
+    background: var(--bg-primary);
+    padding: var(--space-lg) var(--space-md);
+    margin-bottom: var(--space-md);
+    border-radius: 16px;
 }
 
 section h2 {
-    font-size: 18px;
+    font-size: 13px;
     font-weight: 600;
     margin-bottom: var(--space-md);
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
-/* Card Selection - Wide Open */
+/* Card Selection - Clean Grid */
 .card-selection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -102,20 +106,19 @@ section h2 {
 }
 
 .card-selector h3 {
-    margin-bottom: var(--space-xs);
+    margin-bottom: var(--space-sm);
     color: var(--text-secondary);
     font-size: 14px;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.01em;
 }
 
 .card-select {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border: 1px solid var(--border-default);
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 12px;
+    font-size: 15px;
     background: var(--bg-primary);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -126,27 +129,26 @@ section h2 {
 .card-select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
 }
 
 .card-select:hover {
-    border-color: var(--primary-light);
+    border-color: var(--border-medium);
 }
 
 .card-info {
-    margin-top: var(--space-sm);
+    margin-top: var(--space-md);
     padding: var(--space-md);
-    background: var(--bg-primary);
+    background: var(--bg-tertiary);
     border-radius: 12px;
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
+    border: none;
+    box-shadow: none;
     min-height: 60px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .card-info:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--border-default);
+    background: var(--border-light);
 }
 
 .card-detail h4 {
@@ -198,11 +200,11 @@ section h2 {
     margin-right: 6px;
 }
 
-/* Spending Section - Compact Grid */
+/* Spending Section - Clean Grid */
 .category-inputs {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: var(--space-sm);
+    gap: var(--space-md);
     margin-bottom: var(--space-md);
 }
 
@@ -217,24 +219,24 @@ section h2 {
 .category-input label {
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-bottom: 4px;
+    gap: 6px;
+    margin-bottom: 6px;
     font-weight: 500;
     color: var(--text-secondary);
     font-size: 14px;
 }
 
 .category-icon {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .category-input input {
     width: 100%;
-    padding: 8px 10px;
+    padding: 10px 12px;
     border: 1px solid var(--border-default);
-    border-radius: 8px;
-    font-size: 14px;
-    background: var(--bg-primary);
+    border-radius: 10px;
+    font-size: 15px;
+    background: var(--bg-secondary);
     font-weight: 500;
     transition: all 0.2s ease;
 }
@@ -242,7 +244,8 @@ section h2 {
 .category-input input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
 }
 
 .total-spending {
@@ -277,35 +280,37 @@ section h2 {
     margin: var(--space-lg) 0;
 }
 
-/* Button - Minimal & Bold */
+/* Button - Clean & Modern */
 .btn-calculate {
-    padding: 12px 32px;
+    padding: 14px 40px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     background: var(--primary-color);
     color: white;
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+    transition: all 0.2s ease;
     letter-spacing: -0.01em;
 }
 
 .btn-calculate:hover:not(:disabled) {
     background: var(--primary-light);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .btn-calculate:active:not(:disabled) {
     transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
 }
 
 .btn-calculate:disabled {
-    opacity: 0.4;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 /* Result Section */
@@ -332,35 +337,36 @@ section h2 {
 }
 
 .result-card {
-    padding: var(--space-lg);
+    padding: var(--space-xl);
     background: var(--bg-primary);
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+    transition: all 0.2s ease;
 }
 
 .result-card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     border-color: var(--border-default);
+    transform: translateY(-2px);
 }
 
 .result-card h3 {
-    font-size: 18px;
-    margin-bottom: var(--space-sm);
+    font-size: 19px;
+    margin-bottom: var(--space-md);
     color: var(--text-primary);
     font-weight: 600;
     letter-spacing: -0.01em;
 }
 
 .result-card .total-benefit {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--success-color);
-    margin: var(--space-sm) 0;
+    margin: var(--space-md) 0;
     text-align: center;
-    padding: var(--space-md);
-    background: var(--bg-secondary);
+    padding: var(--space-lg);
+    background: rgba(16, 185, 129, 0.06);
     border-radius: 12px;
     letter-spacing: -0.02em;
 }
@@ -406,40 +412,41 @@ section h2 {
 }
 
 .annual-fee {
-    margin-top: var(--space-xs);
-    padding: 8px 12px;
-    background: #fef3c7;
-    border-radius: 8px;
+    margin-top: var(--space-sm);
+    padding: 10px 14px;
+    background: rgba(251, 191, 36, 0.1);
+    border-radius: 10px;
     text-align: center;
     font-size: 14px;
     color: #92400e;
-    border: 1px solid #fde68a;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    font-weight: 500;
 }
 
-/* Result Summary - Hero Section */
+/* Result Summary - Clean Hero Section */
 .result-summary {
-    padding: var(--space-xl) var(--space-lg);
-    background: var(--bg-secondary);
-    border-radius: 12px;
+    padding: var(--space-2xl) var(--space-xl);
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+    border-radius: 16px;
     text-align: center;
-    border: none;
+    border: 1px solid var(--border-light);
     box-shadow: none;
 }
 
 .result-summary h3 {
-    font-size: 14px;
-    margin-bottom: var(--space-sm);
+    font-size: 13px;
+    margin-bottom: var(--space-md);
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.05em;
 }
 
 .winner {
-    font-size: 20px;
+    font-size: 24px;
     font-weight: 700;
     color: var(--primary-color);
-    margin: var(--space-sm) 0;
+    margin: var(--space-md) 0;
     letter-spacing: -0.02em;
 }
 
@@ -452,7 +459,7 @@ section h2 {
 .difference-amount {
     color: var(--success-color);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 20px;
 }
 
 /* Footer - Subtle */
