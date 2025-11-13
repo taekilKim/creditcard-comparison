@@ -86,7 +86,16 @@ header h1 {
 }
 
 .subtitle {
-    font-size: 20px;
+    font-size: 24px;
+    color: var(--vercel-fg);
+    font-weight: 600;
+    max-width: 800px;
+    margin: 0 auto var(--space-12) auto;
+    line-height: 1.6;
+}
+
+.subtitle-detail {
+    font-size: 16px;
     color: var(--vercel-gray);
     font-weight: 400;
     max-width: 700px;
