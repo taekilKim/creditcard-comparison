@@ -118,7 +118,8 @@ function getDefaultCategories() {
         { id: '배달', name: '배달앱', icon: '🛵' },
         { id: '영화', name: '영화/문화', icon: '🎬' },
         { id: '병원', name: '병원/약국', icon: '🏥' },
-        { id: '뷰티', name: '뷰티/미용', icon: '💅' }
+        { id: '뷰티', name: '뷰티/미용', icon: '💅' },
+        { id: '생활', name: '생활(세탁소 등)', icon: '🧺' }
     ];
 }
 
@@ -462,6 +463,12 @@ function displayCardInfo(card, container) {
     }
 
     const benefitsHtml = card.benefits.map(benefit => {
+        // 혜택 부가 설명 HTML
+        let benefitNotesHtml = '';
+        if (benefit.notes) {
+            benefitNotesHtml = `<small style="display: block; margin-top: 5px; color: #666; font-style: italic;">※ ${benefit.notes}</small>`;
+        }
+
         if (benefit.tiers && benefit.tiers.length > 0) {
             // 구간별 혜택
             const tiersHtml = benefit.tiers.map(tier =>
@@ -472,6 +479,7 @@ function displayCardInfo(card, container) {
                     <span class="benefit-category">${benefit.category}:</span>
                     ${benefit.type === 'discount' ? '할인' : '포인트'}<br>
                     <small style="color: #666;">${tiersHtml}</small>
+                    ${benefitNotesHtml}
                 </div>
             `;
         } else {
@@ -481,6 +489,7 @@ function displayCardInfo(card, container) {
                     <span class="benefit-category">${benefit.category}:</span>
                     ${benefit.type === 'discount' ? '할인' : '포인트'} ${benefit.rate}%
                     (월 최대 ${benefit.maxMonthly.toLocaleString()}원)
+                    ${benefitNotesHtml}
                 </div>
             `;
         }
@@ -539,11 +548,22 @@ function displayCardInfo(card, container) {
         feeHtml = `<p>연회비: 0원</p>`;
     }
 
+    // 카드 설명 HTML
+    let cardDescriptionHtml = '';
+    if (card.description) {
+        cardDescriptionHtml = `
+            <div style="margin: 10px 0; padding: 10px; background: #f0f9ff; border-left: 3px solid #0ea5e9; border-radius: 4px;">
+                <p style="font-size: 0.9rem; color: #0c4a6e; margin: 0;">${card.description}</p>
+            </div>
+        `;
+    }
+
     container.innerHTML = `
         <div class="card-detail">
             ${cardImageHtml}
             <h4>${card.name}</h4>
             <p>발급사: ${card.issuer}</p>
+            ${cardDescriptionHtml}
             ${feeHtml}
             <div style="margin-top: 10px;">
                 ${benefitsHtml}
@@ -644,7 +664,8 @@ function calculateCardBenefit(card, cardNumber) {
                     rate: rate,
                     spending: totalSpending,
                     benefitIndex: benefitIndex,
-                    limitGroupId: benefit.limitGroupId || null
+                    limitGroupId: benefit.limitGroupId || null,
+                    notes: benefit.notes || null
                 });
             }
         } else {
@@ -663,7 +684,8 @@ function calculateCardBenefit(card, cardNumber) {
                     rate: rate,
                     spending: spending,
                     benefitIndex: benefitIndex,
-                    limitGroupId: benefit.limitGroupId || null
+                    limitGroupId: benefit.limitGroupId || null,
+                    notes: benefit.notes || null
                 });
             }
         }
@@ -820,11 +842,17 @@ function createResultCardHTML(result) {
     const breakdownHtml = result.breakdown.map(item => {
         let amountText = `${Math.round(item.amount).toLocaleString()}원`;
         let groupLimitNote = '';
+        let benefitNotesHtml = '';
 
         // 공통 한도가 적용된 경우 표시
         if (item.groupLimitApplied && item.originalAmount) {
             amountText = `<span style="text-decoration: line-through; color: #999;">${Math.round(item.originalAmount).toLocaleString()}원</span> → ${Math.round(item.amount).toLocaleString()}원`;
             groupLimitNote = `<small style="display: block; color: #ff6b6b; font-size: 0.85rem;">공통한도 적용 (그룹 최대 ${item.groupLimit.toLocaleString()}원)</small>`;
+        }
+
+        // 혜택 부가 설명 표시
+        if (item.notes) {
+            benefitNotesHtml = `<small style="display: block; margin-top: 3px; color: #666; font-style: italic; font-size: 0.85rem;">※ ${item.notes}</small>`;
         }
 
         return `
@@ -836,6 +864,7 @@ function createResultCardHTML(result) {
                     ${item.type === 'discount' ? '할인' : '포인트'}
                     ${amountText}
                     ${groupLimitNote}
+                    ${benefitNotesHtml}
                 </span>
             </div>
         `;
@@ -858,9 +887,20 @@ function createResultCardHTML(result) {
         `;
     }
 
+    // 카드 설명 HTML
+    let cardDescriptionHtml = '';
+    if (result.card.description) {
+        cardDescriptionHtml = `
+            <div style="margin: 10px 0; padding: 8px; background: #f0f9ff; border-left: 3px solid #0ea5e9; border-radius: 4px;">
+                <p style="font-size: 0.85rem; color: #0c4a6e; margin: 0;">${result.card.description}</p>
+            </div>
+        `;
+    }
+
     return `
         ${cardImageHtml}
         <h3>${result.card.name}</h3>
+        ${cardDescriptionHtml}
         <div class="total-benefit">
             총 혜택: ${Math.round(result.totalBenefit).toLocaleString()}원
         </div>

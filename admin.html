@@ -522,6 +522,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label>📥 JSON에서 불러오기 (선택)</label>
+                    <textarea id="jsonImport" placeholder='{"id": "card_123", "name": "카드명", ...}' style="min-height: 100px; font-family: monospace; font-size: 12px;"></textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button type="button" class="btn btn-primary" onclick="importFromJSON()">JSON 불러오기</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('jsonImport').value = ''">지우기</button>
+                    </div>
+                    <p class="help-text">카드 데이터를 JSON 형식으로 붙여넣고 "JSON 불러오기" 버튼을 클릭하면 폼에 자동으로 채워집니다</p>
+                </div>
+
+                <div class="form-group">
                     <label>카드명 *</label>
                     <input type="text" id="cardName" placeholder="예: KB국민 My WE:SH">
                 </div>
@@ -540,6 +550,12 @@
                         <option value="NH농협카드">NH농협카드</option>
                         <option value="BC카드">BC카드</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label>카드 소개</label>
+                    <textarea id="cardDescription" placeholder="카드의 주요 특징이나 추천 대상을 간단히 설명하세요"></textarea>
+                    <p class="help-text">카드의 기본적인 소개 및 특징을 자유롭게 작성할 수 있습니다</p>
                 </div>
 
                 <div class="form-group">
@@ -625,6 +641,7 @@
             { id: '영화', name: '영화/문화', icon: '🎬' },
             { id: '병원', name: '병원/약국', icon: '🏥' },
             { id: '뷰티', name: '뷰티/미용', icon: '💅' },
+            { id: '생활', name: '생활(세탁소 등)', icon: '🧺' },
             { id: '공과금', name: '공과금', icon: '💡' }
         ];
 
@@ -642,6 +659,7 @@
             '영화': ['CGV', '롯데시네마', '메가박스'],
             '병원': ['병원', '약국', '의원'],
             '뷰티': ['올리브영', '랄라블라', '뷰티플렉스', '미용실'],
+            '생활': ['세탁소', '크리닝', '빨래방', '수선집'],
             '공과금': ['전기요금', '가스요금', '수도요금', '관리비', '통신비', '인터넷', '아파트관리비']
         };
 
@@ -876,6 +894,12 @@
                     </div>
 
                     <div class="form-group">
+                        <label>혜택 부가 설명 (선택)</label>
+                        <textarea class="benefit-notes" placeholder="혜택에 대한 추가 설명이나 유의사항을 입력하세요"></textarea>
+                        <p class="help-text">예: 특정 조건, 제외 사항, 주의사항 등</p>
+                    </div>
+
+                    <div class="form-group">
                         <label>공통한도 그룹 ID (선택)</label>
                         <input type="text" class="limit-group-id" placeholder="예: GROUP_A">
                         <p class="help-text">여러 혜택이 하나의 한도를 공유하려면 같은 ID 입력</p>
@@ -895,6 +919,11 @@
                             <label>그룹 월 최대 한도 (원)</label>
                             <input type="number" class="group-limit-monthly" placeholder="10000" step="1000">
                             <p class="help-text">공통한도 그룹의 월 최대 한도</p>
+                        </div>
+                        <div class="form-group">
+                            <label>그룹 한도 설명 (선택)</label>
+                            <textarea class="group-limit-description" placeholder="공통한도 그룹에 대한 설명을 입력하세요"></textarea>
+                            <p class="help-text">예: 어떤 혜택들이 이 한도를 공유하는지 설명</p>
                         </div>
                     </div>
 
@@ -1126,6 +1155,7 @@
             const cardName = document.getElementById('cardName').value;
             const cardIssuer = document.getElementById('cardIssuer').value;
             const cardImage = document.getElementById('cardImage').value;
+            const cardDescription = document.getElementById('cardDescription').value;
 
             if (!cardName || !cardIssuer) {
                 alert('카드명과 발급사를 입력해주세요!');
@@ -1151,6 +1181,7 @@
                 const category = item.querySelector('.benefit-category').value;
                 const type = item.querySelector('.benefit-type').value;
                 const description = item.querySelector('.benefit-description').value;
+                const notes = item.querySelector('.benefit-notes')?.value || '';
                 const scope = item.querySelector('.benefit-scope').value;
                 const affiliates = item.querySelector('.benefit-affiliates')?.value || '';
                 const useTiers = item.querySelector('.use-tiers').checked;
@@ -1159,6 +1190,7 @@
 
                 // 그룹 한도 수집 (단일 또는 구간별)
                 let groupLimitMonthly = null;
+                let groupLimitDescription = '';
                 if (useGroupTiers) {
                     // 구간별 그룹 한도
                     const groupTiers = [];
@@ -1173,9 +1205,11 @@
                 } else {
                     // 단일 그룹 한도
                     const singleLimit = parseInt(item.querySelector('.group-limit-monthly')?.value) || 0;
+                    const description = item.querySelector('.group-limit-description')?.value || '';
                     if (singleLimit > 0) {
                         groupLimitMonthly = singleLimit;
                     }
+                    groupLimitDescription = description;
                 }
 
                 // 제휴처 정보 처리
@@ -1198,20 +1232,22 @@
                         tiers.push({ minPreviousMonth, rate, maxMonthly });
                     });
                     benefits.push({
-                        category, type, description, scope,
+                        category, type, description, notes, scope,
                         affiliates: affiliateList, tiers,
                         limitGroupId: limitGroupId || null,
-                        groupLimitMonthly: groupLimitMonthly || null
+                        groupLimitMonthly: groupLimitMonthly || null,
+                        groupLimitDescription: groupLimitDescription || null
                     });
                 } else {
                     // 단일 혜택
                     const rate = parseFloat(item.querySelector('.benefit-rate').value) || 0;
                     const maxMonthly = parseInt(item.querySelector('.benefit-max').value) || 0;
                     benefits.push({
-                        category, type, rate, maxMonthly, description, scope,
+                        category, type, rate, maxMonthly, description, notes, scope,
                         affiliates: affiliateList,
                         limitGroupId: limitGroupId || null,
-                        groupLimitMonthly: groupLimitMonthly || null
+                        groupLimitMonthly: groupLimitMonthly || null,
+                        groupLimitDescription: groupLimitDescription || null
                     });
                 }
             });
@@ -1221,6 +1257,7 @@
                 id: cardId,
                 name: cardName,
                 issuer: cardIssuer,
+                description: cardDescription || null,
                 imageUrl: cardImage || null,
                 benefits: benefits,
                 annualFee: { options: annualFeeOptions }
@@ -1269,6 +1306,7 @@
         function resetForm() {
             document.getElementById('cardName').value = '';
             document.getElementById('cardIssuer').value = '';
+            document.getElementById('cardDescription').value = '';
             document.getElementById('cardImage').value = '';
             document.getElementById('annualFeeList').innerHTML = '';
             document.getElementById('benefitsList').innerHTML = '';
@@ -1279,6 +1317,116 @@
             editingCardId = null;
             addAnnualFeeOption();
             addBenefit();
+        }
+
+        // JSON에서 카드 데이터 불러오기
+        function importFromJSON() {
+            const jsonText = document.getElementById('jsonImport').value.trim();
+
+            if (!jsonText) {
+                alert('JSON 데이터를 입력해주세요!');
+                return;
+            }
+
+            try {
+                const card = JSON.parse(jsonText);
+
+                // 폼 초기화
+                resetForm();
+
+                // 기본 정보
+                document.getElementById('cardName').value = card.name || '';
+                document.getElementById('cardIssuer').value = card.issuer || '';
+                document.getElementById('cardDescription').value = card.description || '';
+                document.getElementById('cardImage').value = card.imageUrl || '';
+
+                // 연회비 옵션
+                if (card.annualFee && card.annualFee.options) {
+                    document.getElementById('annualFeeList').innerHTML = '';
+                    annualFeeCounter = 0;
+                    card.annualFee.options.forEach(opt => {
+                        addAnnualFeeOption();
+                        const item = document.getElementById(`fee-${annualFeeCounter}`);
+                        item.querySelector('.fee-type').value = opt.type || '국내전용';
+                        item.querySelector('.fee-brand').value = opt.brand || '';
+                        item.querySelector('.fee-amount').value = opt.fee || 0;
+                    });
+                }
+
+                // 혜택
+                if (card.benefits && card.benefits.length > 0) {
+                    document.getElementById('benefitsList').innerHTML = '';
+                    benefitCounter = 0;
+                    card.benefits.forEach(benefit => {
+                        addBenefit();
+                        const item = document.getElementById(`benefit-${benefitCounter}`);
+                        item.querySelector('.benefit-category').value = benefit.category || '전체';
+                        item.querySelector('.benefit-type').value = benefit.type || 'discount';
+                        item.querySelector('.benefit-description').value = benefit.description || '';
+                        item.querySelector('.benefit-notes').value = benefit.notes || '';
+
+                        // 제휴처 정보
+                        if (benefit.scope) {
+                            item.querySelector('.benefit-scope').value = benefit.scope;
+                            toggleAffiliateInput(benefitCounter);
+                        }
+                        if (benefit.affiliates && benefit.affiliates !== 'ALL' && benefit.affiliates !== 'MAJOR') {
+                            item.querySelector('.benefit-affiliates').value = benefit.affiliates;
+                        }
+
+                        // 구간별 혜택
+                        if (benefit.tiers && benefit.tiers.length > 0) {
+                            item.querySelector('.use-tiers').checked = true;
+                            toggleTiers(benefitCounter);
+
+                            benefit.tiers.forEach(tier => {
+                                addTier(benefitCounter);
+                                const tierItem = document.querySelector(`#tiersList-${benefitCounter} .tier-item:last-child`);
+                                tierItem.querySelector('.tier-min').value = tier.minPreviousMonth || 0;
+                                tierItem.querySelector('.tier-rate').value = tier.rate || 0;
+                                tierItem.querySelector('.tier-max').value = tier.maxMonthly || 0;
+                            });
+                        } else {
+                            // 단일 혜택
+                            item.querySelector('.benefit-rate').value = benefit.rate || 0;
+                            item.querySelector('.benefit-max').value = benefit.maxMonthly || 0;
+                        }
+
+                        // 공통한도 그룹
+                        if (benefit.limitGroupId) {
+                            item.querySelector('.limit-group-id').value = benefit.limitGroupId;
+                        }
+                        if (benefit.groupLimitMonthly) {
+                            if (Array.isArray(benefit.groupLimitMonthly)) {
+                                // 구간별 그룹 한도
+                                item.querySelector('.use-group-tiers').checked = true;
+                                toggleGroupTiers(benefitCounter);
+
+                                benefit.groupLimitMonthly.forEach(tier => {
+                                    addGroupTier(benefitCounter);
+                                    const groupTierItem = document.querySelector(`#groupTiersList-${benefitCounter} .group-tier-item:last-child`);
+                                    groupTierItem.querySelector('.group-tier-min').value = tier.minPreviousMonth || 0;
+                                    groupTierItem.querySelector('.group-tier-max').value = tier.maxMonthly || 0;
+                                });
+                            } else {
+                                // 단일 그룹 한도
+                                item.querySelector('.group-limit-monthly').value = benefit.groupLimitMonthly;
+                            }
+                        }
+                        if (benefit.groupLimitDescription) {
+                            item.querySelector('.group-limit-description').value = benefit.groupLimitDescription;
+                        }
+                    });
+                }
+
+                // JSON 입력창 비우기
+                document.getElementById('jsonImport').value = '';
+
+                alert('✅ JSON 데이터를 성공적으로 불러왔습니다!');
+            } catch (error) {
+                console.error('JSON 파싱 오류:', error);
+                alert('❌ JSON 형식이 올바르지 않습니다.\n\n' + error.message);
+            }
         }
 
         // 카드 목록 로드 (Google Sheets에서)
@@ -1337,6 +1485,7 @@
             // 기본 정보
             document.getElementById('cardName').value = card.name;
             document.getElementById('cardIssuer').value = card.issuer;
+            document.getElementById('cardDescription').value = card.description || '';
             document.getElementById('cardImage').value = card.imageUrl || '';
 
             // 연회비 옵션
@@ -1359,6 +1508,7 @@
                 item.querySelector('.benefit-category').value = benefit.category;
                 item.querySelector('.benefit-type').value = benefit.type;
                 item.querySelector('.benefit-description').value = benefit.description || '';
+                item.querySelector('.benefit-notes').value = benefit.notes || '';
 
                 // 제휴처 정보 로드
                 if (benefit.scope) {
@@ -1407,6 +1557,10 @@
                         // 단일 그룹 한도
                         item.querySelector('.group-limit-monthly').value = benefit.groupLimitMonthly;
                     }
+                }
+                // 그룹 한도 설명 로드
+                if (benefit.groupLimitDescription) {
+                    item.querySelector('.group-limit-description').value = benefit.groupLimitDescription;
                 }
             });
 
