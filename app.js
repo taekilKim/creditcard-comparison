@@ -10,6 +10,21 @@ let previousMonthUsage = 0; // 전월실적
 
 const STORAGE_KEY = 'creditcard_data';
 
+// 개발자 모드
+const isDevMode = () => localStorage.getItem('devMode') === 'true';
+const devLog = (...args) => {
+    if (isDevMode()) {
+        console.log('[DEV]', ...args);
+    }
+};
+const devGroup = (label, fn) => {
+    if (isDevMode()) {
+        console.group(`[DEV] ${label}`);
+        fn();
+        console.groupEnd();
+    }
+};
+
 // DOM 요소
 const card1Select = document.getElementById('card1Select');
 const card2Select = document.getElementById('card2Select');
@@ -35,18 +50,39 @@ function setupEventListeners() {
 
 // 데이터 초기화 - localStorage 우선, 없으면 API/로컬
 async function initializeData() {
+    devLog('🚀 데이터 초기화 시작');
+
     // 1. localStorage 먼저 확인
     const localData = loadFromLocalStorage();
     if (localData && localData.cards && localData.cards.length > 0) {
         console.log('localStorage에서 데이터 로드:', localData.cards.length, '개 카드');
         cardsData = localData.cards;
         categoriesData = localData.categories || getDefaultCategories();
+
+        devGroup('로드된 카드 데이터', () => {
+            cardsData.forEach(card => {
+                console.log(`📇 ${card.name} (${card.issuer})`);
+                console.log('  - 혜택 수:', card.benefits.length);
+                console.log('  - 공통한도 그룹:', card.limitGroups ? Object.keys(card.limitGroups) : '없음');
+                if (card.limitGroups) {
+                    Object.entries(card.limitGroups).forEach(([groupId, groupInfo]) => {
+                        if (groupInfo.tiers) {
+                            console.log(`    ${groupId}: 구간별`, groupInfo.tiers);
+                        } else {
+                            console.log(`    ${groupId}: 단일 ${groupInfo.maxMonthly}원`);
+                        }
+                    });
+                }
+            });
+        });
+
         populateCardSelects();
         createCategoryInputs();
         return;
     }
 
     // 2. localStorage가 없으면 기존 방식 (API 또는 로컬 JSON)
+    devLog('localStorage 없음, API/로컬에서 로드');
     if (DATA_SOURCE === 'api') {
         await loadDataFromAPI();
     } else {
@@ -553,6 +589,12 @@ function calculateBenefits() {
 
 // 개별 카드 혜택 계산
 function calculateCardBenefit(card, cardNumber) {
+    devGroup(`💳 ${card.name} 혜택 계산 시작`, () => {
+        console.log('전월실적:', previousMonthUsage.toLocaleString(), '원');
+        console.log('소비 데이터:', spendingData);
+        console.log('공통한도 그룹:', card.limitGroups);
+    });
+
     let totalBenefit = 0;
     const breakdown = [];
     const benefitsByGroup = {}; // 공통 한도 그룹별로 혜택 추적
@@ -569,18 +611,21 @@ function calculateCardBenefit(card, cardNumber) {
                 if (previousMonthUsage >= tier.minPreviousMonth) {
                     rate = tier.rate;
                     maxMonthly = tier.maxMonthly;
+                    devLog(`  ✓ ${benefit.category} 구간 선택: 전월 ${tier.minPreviousMonth.toLocaleString()}원 이상 → ${rate}%, 최대 ${maxMonthly.toLocaleString()}원`);
                     break;
                 }
             }
 
             // 조건을 만족하는 구간이 없으면 이 혜택은 적용 안 됨
             if (rate === 0) {
+                devLog(`  ✗ ${benefit.category} 구간 조건 미충족, 혜택 적용 안 됨`);
                 return;
             }
         } else {
             // 단일 혜택
             rate = benefit.rate || 0;
             maxMonthly = benefit.maxMonthly || 0;
+            devLog(`  - ${benefit.category}: ${rate}%, 최대 ${maxMonthly.toLocaleString()}원`);
         }
 
         // "전체" 카테고리 처리: 모든 소비에 적용
@@ -626,6 +671,8 @@ function calculateCardBenefit(card, cardNumber) {
 
     // 공통 한도 그룹 적용
     if (card.limitGroups && Object.keys(card.limitGroups).length > 0) {
+        devLog('🔗 공통한도 그룹 적용 시작');
+
         // 그룹별로 혜택 집계
         Object.keys(card.limitGroups).forEach(groupId => {
             const groupInfo = card.limitGroups[groupId];
@@ -638,16 +685,19 @@ function calculateCardBenefit(card, cardNumber) {
                 for (const tier of sortedTiers) {
                     if (previousMonthUsage >= tier.minPreviousMonth) {
                         groupLimit = tier.maxMonthly;
+                        devLog(`  ✓ ${groupId} 구간별 한도 선택: 전월 ${tier.minPreviousMonth.toLocaleString()}원 이상 → ${groupLimit.toLocaleString()}원`);
                         break;
                     }
                 }
                 // 조건을 만족하는 구간이 없으면 그룹 한도 0 (적용 안 됨)
                 if (groupLimit === 0) {
+                    devLog(`  ✗ ${groupId} 구간 조건 미충족, 그룹 한도 적용 안 됨`);
                     return;
                 }
             } else if (groupInfo.maxMonthly) {
                 // 단일 그룹 한도
                 groupLimit = groupInfo.maxMonthly;
+                devLog(`  - ${groupId} 단일 한도: ${groupLimit.toLocaleString()}원`);
             } else {
                 return; // 한도 정보 없음
             }
@@ -656,15 +706,18 @@ function calculateCardBenefit(card, cardNumber) {
             const groupBreakdownItems = breakdown.filter(item => item.limitGroupId === groupId);
 
             if (groupBreakdownItems.length === 0) {
+                devLog(`  - ${groupId}: 해당 그룹의 혜택 없음`);
                 return;
             }
 
             // 그룹 내 혜택 합계 계산
             const groupTotal = groupBreakdownItems.reduce((sum, item) => sum + item.amount, 0);
+            devLog(`  📊 ${groupId} 합계: ${groupTotal.toLocaleString()}원 (한도: ${groupLimit.toLocaleString()}원)`);
 
             // 그룹 한도 초과 시 비례 감소
             if (groupTotal > groupLimit) {
                 const reductionRatio = groupLimit / groupTotal;
+                devLog(`  ⚠️ ${groupId} 한도 초과! 비례 감소율: ${(reductionRatio * 100).toFixed(1)}%`);
 
                 // totalBenefit에서 초과분 차감
                 const excessAmount = groupTotal - groupLimit;
@@ -681,6 +734,7 @@ function calculateCardBenefit(card, cardNumber) {
                     );
 
                     if (breakdownItem) {
+                        devLog(`    ${item.category}: ${Math.round(item.amount).toLocaleString()}원 → ${Math.round(adjustedAmount).toLocaleString()}원`);
                         breakdownItem.originalAmount = breakdownItem.amount;
                         breakdownItem.amount = adjustedAmount;
                         breakdownItem.groupLimitApplied = true;
@@ -688,9 +742,20 @@ function calculateCardBenefit(card, cardNumber) {
                         breakdownItem.groupId = groupId;
                     }
                 });
+            } else {
+                devLog(`  ✓ ${groupId} 한도 내 정상 처리`);
             }
         });
     }
+
+    devGroup(`📈 ${card.name} 최종 계산 결과`, () => {
+        console.log('총 혜택:', Math.round(totalBenefit).toLocaleString(), '원');
+        console.log('세부 내역:');
+        breakdown.forEach(item => {
+            const groupText = item.groupLimitApplied ? ` [그룹한도 적용: ${item.groupId}]` : '';
+            console.log(`  - ${item.category}: ${Math.round(item.amount).toLocaleString()}원${groupText}`);
+        });
+    });
 
     // 선택된 연회비 옵션 가져오기
     const feeOption = cardNumber === 1 ? selectedCard1FeeOption : selectedCard2FeeOption;
