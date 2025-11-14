@@ -236,6 +236,111 @@ section h2 {
     margin-right: var(--space-8);
 }
 
+/* Accordion Styles */
+.accordion {
+    margin-top: var(--space-16);
+}
+
+.accordion-item {
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    margin-bottom: var(--space-12);
+    overflow: hidden;
+    background: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.accordion-item:hover {
+    box-shadow: var(--shadow-smallest);
+}
+
+.accordion-header {
+    padding: var(--space-16);
+    background: var(--vercel-lightest-gray);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.accordion-header:hover {
+    background: #f5f5f5;
+}
+
+.accordion-header.active {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.accordion-title {
+    font-weight: 600;
+    color: var(--vercel-fg);
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.accordion-icon {
+    font-size: 12px;
+    color: var(--vercel-gray);
+    transition: transform 0.2s ease;
+}
+
+.accordion-header.active .accordion-icon {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-content.active {
+    max-height: 1000px;
+}
+
+.accordion-body {
+    padding: var(--space-16);
+    color: var(--vercel-gray);
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.accordion-body dl {
+    margin: 0;
+}
+
+.accordion-body dt {
+    font-weight: 600;
+    color: var(--vercel-fg);
+    margin-top: var(--space-12);
+    margin-bottom: var(--space-4);
+}
+
+.accordion-body dt:first-child {
+    margin-top: 0;
+}
+
+.accordion-body dd {
+    margin-left: 0;
+    color: var(--vercel-gray);
+    margin-bottom: var(--space-8);
+}
+
+.accordion-body .highlight {
+    color: var(--vercel-accent-1);
+    font-weight: 600;
+}
+
+.accordion-body .warning {
+    color: #f59e0b;
+    font-weight: 500;
+}
+
 /* Spending Section - Vercel Grid */
 .category-inputs {
     display: grid;

@@ -462,37 +462,78 @@ function displayCardInfo(card, container) {
         `;
     }
 
-    const benefitsHtml = card.benefits.map(benefit => {
-        // 혜택 부가 설명 HTML
-        let benefitNotesHtml = '';
-        if (benefit.notes) {
-            benefitNotesHtml = `<small style="display: block; margin-top: 5px; color: #666; font-style: italic;">※ ${benefit.notes}</small>`;
+    const benefitsHtml = card.benefits.map((benefit, index) => {
+        const accordionId = `accordion-${container.id}-${index}`;
+
+        // 혜택 요약 (헤더에 표시)
+        let summary = '';
+        if (benefit.tiers && benefit.tiers.length > 0) {
+            summary = `전월실적 구간별 할인`;
+        } else {
+            summary = `${benefit.rate}% ${benefit.type === 'discount' ? '할인' : '적립'} (월 최대 ${benefit.maxMonthly.toLocaleString()}원)`;
         }
 
+        // 상세 정보 (아코디언 내용)
+        let detailsHtml = '<dl>';
+
+        // 혜택 타입
+        detailsHtml += `<dt>혜택 타입</dt><dd class="highlight">${benefit.type === 'discount' ? '💰 즉시 할인' : '🎁 포인트 적립'}</dd>`;
+
+        // 구간별 vs 단일 혜택
         if (benefit.tiers && benefit.tiers.length > 0) {
-            // 구간별 혜택
-            const tiersHtml = benefit.tiers.map(tier =>
-                `${tier.minPreviousMonth.toLocaleString()}원 이상: ${tier.rate}% (월 ${tier.maxMonthly.toLocaleString()}원)`
-            ).join('<br>');
-            return `
-                <div class="benefit-item">
-                    <span class="benefit-category">${benefit.category}:</span>
-                    ${benefit.type === 'discount' ? '할인' : '포인트'}<br>
-                    <small style="color: #666;">${tiersHtml}</small>
-                    ${benefitNotesHtml}
-                </div>
-            `;
+            detailsHtml += `<dt>전월실적 구간별 혜택</dt>`;
+            benefit.tiers.forEach(tier => {
+                detailsHtml += `<dd>• 전월 ${tier.minPreviousMonth.toLocaleString()}원 이상: <span class="highlight">${tier.rate}%</span> (월 최대 ${tier.maxMonthly.toLocaleString()}원)</dd>`;
+            });
         } else {
-            // 단일 혜택
-            return `
-                <div class="benefit-item">
-                    <span class="benefit-category">${benefit.category}:</span>
-                    ${benefit.type === 'discount' ? '할인' : '포인트'} ${benefit.rate}%
-                    (월 최대 ${benefit.maxMonthly.toLocaleString()}원)
-                    ${benefitNotesHtml}
-                </div>
-            `;
+            detailsHtml += `<dt>할인/적립률</dt><dd class="highlight">${benefit.rate}%</dd>`;
+            detailsHtml += `<dt>월 최대 한도</dt><dd class="highlight">${benefit.maxMonthly.toLocaleString()}원</dd>`;
         }
+
+        // 제휴처 정보
+        if (benefit.affiliates) {
+            let affiliateText = '';
+            if (benefit.affiliates === 'ALL') {
+                affiliateText = `전체 ${benefit.category} 가맹점`;
+            } else if (benefit.affiliates === 'MAJOR') {
+                affiliateText = `주요 ${benefit.category} 프랜차이즈`;
+            } else {
+                affiliateText = benefit.affiliates.replace(/,/g, ', ');
+            }
+            detailsHtml += `<dt>제휴처</dt><dd>${affiliateText}</dd>`;
+        }
+
+        // 공통한도 그룹
+        if (benefit.limitGroupId) {
+            detailsHtml += `<dt>공통한도 그룹</dt><dd class="warning">⚠️ ${benefit.limitGroupId} (다른 혜택과 한도 공유)</dd>`;
+            if (benefit.groupLimitDescription) {
+                detailsHtml += `<dd style="font-size: 12px; margin-top: 4px;">${benefit.groupLimitDescription}</dd>`;
+            }
+        }
+
+        // 부가 설명
+        if (benefit.notes) {
+            detailsHtml += `<dt>유의사항</dt><dd class="warning">${benefit.notes}</dd>`;
+        }
+
+        detailsHtml += '</dl>';
+
+        return `
+            <div class="accordion-item">
+                <div class="accordion-header" onclick="toggleAccordion('${accordionId}')">
+                    <div class="accordion-title">
+                        <span>${getCategoryIcon(benefit.category)}</span>
+                        <span>${benefit.category}: ${summary}</span>
+                    </div>
+                    <span class="accordion-icon">▼</span>
+                </div>
+                <div id="${accordionId}" class="accordion-content">
+                    <div class="accordion-body">
+                        ${detailsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
     }).join('');
 
     // 연회비 구조 처리 (구버전 호환)
@@ -565,11 +606,26 @@ function displayCardInfo(card, container) {
             <p>발급사: ${card.issuer}</p>
             ${cardDescriptionHtml}
             ${feeHtml}
-            <div style="margin-top: 10px;">
+            <div class="accordion" style="margin-top: 20px;">
                 ${benefitsHtml}
             </div>
         </div>
     `;
+}
+
+// 아코디언 토글 함수
+function toggleAccordion(id) {
+    const content = document.getElementById(id);
+    const header = content.previousElementSibling;
+
+    // 현재 아코디언 아이템 토글
+    if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        header.classList.remove('active');
+    } else {
+        content.classList.add('active');
+        header.classList.add('active');
+    }
 }
 
 // 연회비 옵션 선택 처리
